@@ -779,7 +779,7 @@
               $vol.slider("value", data.vol);
             }
             if (data.filter) {
-              $filter.slider("value", data.filter);
+              $filter.val(data.filter);
             }
             if (data.gain) {
               $gain.slider("value", data.gain);
@@ -1004,10 +1004,11 @@
           $gain.slider("value", $gain.slider("value") + 1);
           break;
         case "U".charCodeAt(0):
-          $rate.slider("value", $rate.slider("value") - 1);
+          console.log("U");
+          $rate.slider("value", $rate.slider("value") - 2);
           break;
         case "I".charCodeAt(0):
-          $rate.slider("value", $rate.slider("value") + 1);
+          $rate.slider("value", $rate.slider("value") + 2);
           break;
         case "O".charCodeAt(0):
           $res.slider("value", $res.slider("value") - 0.05);
