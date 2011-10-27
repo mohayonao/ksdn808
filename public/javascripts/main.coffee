@@ -576,7 +576,7 @@ $ ->
 
                     if data.bpm then $bpm.slider("value", data.bpm)
                     if data.vol then $vol.slider("value", data.vol)
-                    if data.filter then $filter.val(data.filter)
+                    if data.filter then $filter.val(data.filter).change()
                     if data.gain then $gain.slider("value", data.gain)
                     if data.rate then $rate.slider("value", data.rate)
                     if data.res  then $res.slider("value", data.res)
