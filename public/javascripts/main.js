@@ -779,7 +779,7 @@
               $vol.slider("value", data.vol);
             }
             if (data.filter) {
-              $filter.val(data.filter);
+              $filter.val(data.filter).change();
             }
             if (data.gain) {
               $gain.slider("value", data.gain);
