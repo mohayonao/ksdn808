@@ -576,7 +576,7 @@ $ ->
 
                     if data.bpm then $bpm.slider("value", data.bpm)
                     if data.vol then $vol.slider("value", data.vol)
-                    if data.filter then $filter.slider("value", data.filter)
+                    if data.filter then $filter.val(data.filter)
                     if data.gain then $gain.slider("value", data.gain)
                     if data.rate then $rate.slider("value", data.rate)
                     if data.res  then $res.slider("value", data.res)
@@ -709,9 +709,10 @@ $ ->
             when "Y".charCodeAt(0)
                 $gain.slider("value", $gain.slider("value") + 1)
             when "U".charCodeAt(0)
-                $rate.slider("value", $rate.slider("value") - 1)
+                console.log "U"
+                $rate.slider("value", $rate.slider("value") - 2)
             when "I".charCodeAt(0)
-                $rate.slider("value", $rate.slider("value") + 1)
+                $rate.slider("value", $rate.slider("value") + 2)
             when "O".charCodeAt(0)
                 $res.slider("value", $res.slider("value") - 0.05)
             when "P".charCodeAt(0)
