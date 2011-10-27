@@ -32,7 +32,7 @@ do (pico)->
                 return bits
 
             @STREAM_FULL_BITS = calcBits(samplerate /  20)
-            @STREAM_CELL_BITS = calcBits(samplerate / 250)
+            @STREAM_CELL_BITS = calcBits(samplerate / 400)
             @STREAM_FULL_SIZE = 1 << @STREAM_FULL_BITS
             @STREAM_CELL_SIZE = 1 << @STREAM_CELL_BITS
             @STREAM_CELL_COUNT = @STREAM_FULL_SIZE / @STREAM_CELL_SIZE
