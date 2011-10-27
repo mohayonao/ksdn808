@@ -2,6 +2,7 @@
   "name": "ksdn808",
   "version": "0.0.1",
   "dependencies": {
+    "coffee-script": "1.1.2",
     "express": "2.4.6",
     "mongoose": "1.7.4"
   }
