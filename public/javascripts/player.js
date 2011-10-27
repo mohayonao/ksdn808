@@ -40,7 +40,7 @@
           return bits;
         };
         this.STREAM_FULL_BITS = calcBits(samplerate / 20);
-        this.STREAM_CELL_BITS = calcBits(samplerate / 400);
+        this.STREAM_CELL_BITS = calcBits(samplerate / 250);
         this.STREAM_FULL_SIZE = 1 << this.STREAM_FULL_BITS;
         this.STREAM_CELL_SIZE = 1 << this.STREAM_CELL_BITS;
         this.STREAM_CELL_COUNT = this.STREAM_FULL_SIZE / this.STREAM_CELL_SIZE;
