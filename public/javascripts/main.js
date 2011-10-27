@@ -322,12 +322,12 @@
         k = 0;
         for (i = 0; 0 <= cnt ? i < cnt : i > cnt; 0 <= cnt ? i++ : i--) {
           _sample -= cellsize;
-          if (_sample < 0) {
-            i2 = (_index - 6 + maxIndex) % maxIndex;
+          if (_sample <= 0) {
+            i2 = (_index - 1 + maxIndex) % maxIndex;
             i = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
             j = (i2 % PATTERN_SIZE) | 0;
             rpads[i].rhythm.led(j, OFF);
-            i2 = (_index - 5 + maxIndex) % maxIndex;
+            i2 = (_index + maxIndex) % maxIndex;
             i = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
             j = (i2 % PATTERN_SIZE) | 0;
             rpads[i].rhythm.led(j, ON);
@@ -345,10 +345,6 @@
             }
             _index = (_index + 1) % maxIndex;
             _sample += _sampleLimit;
-            if (_sample < 0) {
-              console.log("!!!!!!!!!!!", _sample);
-              0 / 0;
-            }
           }
           vstream = new Float32Array(cellsize);
           _k = k;
@@ -637,7 +633,7 @@
       System.prototype.add = function() {
         var $ctrl, $div, canvas, id;
         if (this.rpads.length >= 8) {
-          return;
+          return -1;
         }
         $div = $(document.createElement("div"));
         $ctrl = $(document.createElement("div"));
@@ -688,7 +684,7 @@
         }
       };
       System.prototype.operate = function(type, id) {
-        var i2, y, _ref4, _ref5, _ref6;
+        var i2, newid, y, _ref4, _ref5, _ref6;
         if (!(id != null)) {
           y = (this.index / PATTERN_SIZE) | 0;
           id = this.rpads[(y / 3) | 0].id;
@@ -710,8 +706,9 @@
             }
             break;
           case COPY:
-            i2 = this.findIndex(this.add());
-            if (i2 !== -1) {
+            newid = this.add();
+            if (newid !== -1) {
+              i2 = this.findIndex(newid);
               this.rpads[i2].rhythm.copy(this.rpads[i].rhythm);
             }
             break;
@@ -1004,7 +1001,6 @@
           $gain.slider("value", $gain.slider("value") + 1);
           break;
         case "U".charCodeAt(0):
-          console.log("U");
           $rate.slider("value", $rate.slider("value") - 2);
           break;
         case "I".charCodeAt(0):

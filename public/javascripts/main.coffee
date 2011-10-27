@@ -242,16 +242,17 @@ $ ->
             k = 0
             for i in [0...cnt]
                 _sample -= cellsize
-                if _sample < 0
-                    i2 = (_index - 6 + maxIndex) % maxIndex
+                if _sample <= 0
+                    i2 = (_index - 1 + maxIndex) % maxIndex
                     i = ((i2 / PATTERN_SIZE) | 0) % rpads.length
                     j = ((i2 % PATTERN_SIZE) | 0)
                     rpads[i].rhythm.led(j, OFF)
 
-                    i2 = (_index - 5 + maxIndex) % maxIndex
+                    i2 = (_index + maxIndex) % maxIndex
                     i = ((i2 / PATTERN_SIZE) | 0) % rpads.length
                     j = ((i2 % PATTERN_SIZE) | 0)
                     rpads[i].rhythm.led(j, ON)
+
                     _src = rpads[i].rhythm.pattern[j]
 
                     for type in [HH, SD, BD]
@@ -261,9 +262,6 @@ $ ->
                         _wavIndex[Vo] = 0
                     _index = (_index + 1) % maxIndex
                     _sample += _sampleLimit
-                    if _sample < 0
-                        console.log "!!!!!!!!!!!", _sample
-                        0 / 0
 
                 vstream = new Float32Array(cellsize)
                 _k = k
@@ -487,7 +485,7 @@ $ ->
                 $("#play").css("color", "#f33")
 
         add: ->
-            if @rpads.length >= 8 then return
+            if @rpads.length >= 8 then return -1
 
             $div = $(document.createElement("div"))
 
@@ -538,8 +536,9 @@ $ ->
                     @rpads[i..i+1] = [ @rpads[i+1], @rpads[i] ]
                     @index -= PATTERN_SIZE * 3
                 when COPY
-                    i2 = @findIndex( @add() )
-                    if i2 != -1
+                    newid = @add()
+                    if newid != -1
+                        i2 = @findIndex(newid)
                         @rpads[i2].rhythm.copy(@rpads[i].rhythm)
                 when CLS then if i?
                     @rpads[i].rhythm.clear()
@@ -709,7 +708,6 @@ $ ->
             when "Y".charCodeAt(0)
                 $gain.slider("value", $gain.slider("value") + 1)
             when "U".charCodeAt(0)
-                console.log "U"
                 $rate.slider("value", $rate.slider("value") - 2)
             when "I".charCodeAt(0)
                 $rate.slider("value", $rate.slider("value") + 2)
