@@ -1,0 +1,8 @@
+{
+  "name": "hotbros",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "2.4.6",
+    "mongoose": "1.7.4"
+  }
+}

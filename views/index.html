@@ -1,0 +1,109 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>KSDN-808</title>
+    <meta name="description" content="KSDN-808はJavaScriptで作られた4つのドラム音と関西電気保安協会が鳴る実用的なリズムマシーンです。あなたの作成したクールなリズムトラックを保存して共有することができます。無料です。" />
+    <meta name="keywords" content="dsp,cm,rhythm,audio" />
+    <meta name="author" content="mohayonao" />
+    <meta property="og:title" content="KSDN-808" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="KSDN-808はJavaScriptで作られた4つのドラム音と関西電気保安協会が鳴る実用的なリズムマシーンです。あなたの作成したクールなリズムトラックを保存して共有することができます。無料です。" />
+    <meta property="og:image" content="http://hotbros.herokuapp.com/images/ogp.png" />
+    <link href="http://fonts.googleapis.com/css?family=Michroma" rel="stylesheet" type="text/css">
+    <link type="text/css" media="screen" rel="stylesheet" href="/stylesheets/main.css" />
+    <link rel="shortcut icon" href="/images/favicon.ico">
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">KSDN-808</a></h1>
+      <div id="social-button">
+        <div class="hatena"></div>
+        <div class="tweet"></div>
+        <div class="google_plus"></div>
+        <div class="facebook"></div>
+      </div>
+    </header>
+    <div id="console">
+      <button id="play">play</button>
+      <button id="options">options</button>
+      <button id="add">+pattern</button>
+      <button id="save">save</button>
+      <input id="save-msg" />
+      <ul id="selector"></ul>
+      <div id="options-panel">
+        <div class="slider">
+          <label>BPM</label><div id="bpm"></div><var id="bpm-val">120</var>
+        </div>
+        <div class="slider">
+          <label>VOL</label><div id="vol"></div><var id="vol-val">8</var>
+        </div>
+        <div class="slider filter-select">
+          <label>FILTER</label>
+          <select id="filter">
+            <option value="-1">NONE</option>
+            <option value="0">LP12</option>
+            <option value="1">HP12</option>
+            <option value="2">BP12</option>
+            <option value="3">BR12</option>
+          </select>
+        </div>
+        <div class="slider">
+          <label>GAIN</label><div id="gain"></div><var id="gain-val">4</var>
+        </div>
+        <div class="slider">
+          <label>RATE</label><div id="rate"></div><var id="rate-val">1</var>
+        </div>
+        <div class="slider">
+          <label>Q</label><div id="res"></div><var id="res-val">0.1</var>
+        </div>
+      </div>
+    </div>
+    <div id="patterns">
+      <div id="edit"></div>
+      <section id="help">
+        <h1>操作</h1>
+        <ul>
+          <li>左クリック → 音を置く (強く)</li>
+          <li>右クリック → 音を置く (弱く)</li>
+          <li>[ SPACE ] → 再生/停止</li>
+          <li>[ N ] → 新しいパターンを追加</li>
+          <li>[ Z ] → オプションの表示/非表示</li>
+          <br/>
+          <li>[ H, J, K, L ] → カーソル移動</li>
+          <li>[ A ] →カーソルに音を外す</li>
+          <li>[ S ] →カーソルに音を置く (弱く)</li>
+          <li>[ D ] →カーソルに音を置く (強く)</li>
+          <li>[ 1 .. 8 ] → カーソル列に関西電気保安協会を置く</li>
+          <li>[ 0 ] → カーソル列の関西電気保安協会を外す</li>
+        </ul>
+        <ul>
+          <li>[ X ] → パターンクリア</li>
+          <li>[ C ] → パターンコピー</li>
+          <li>[ V ] → パターンを上へ</li>
+          <li>[ B ] → パターンを下へ</li>
+          <br/>
+          <li>[ F ] → フィルタの切り替え</li>
+          <br/>
+          <li>[ Q, W ] → BPMの上下</li>
+          <li>[ E, R ] → 関西電気保安協会の音量の上下</li>
+          <li>[ T, Y ] → フィルタのゲインの上下</li>
+          <li>[ U, I ] → フィルタのスピードの上下</li>
+          <li>[ O, P ] → フィルタのカットオフの上下</li>
+        </ul>
+        <div id="tips">
+          Google Chrome 14 または Mozilla Firefox 6.0 以上で動作します。
+        </div>
+      </section>
+    </div>
+    <footer>
+      &copy; 2011 <a href="http://twitter.com/#!/mohayonao" target="twitter">mohayonao</a> | <a href="https://github.com/mohayonao/ksdn808" target="github">github</a> | 関西電気保安協会リズムマシーン KSDN-808
+    </footer>
+  </body>
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/blitzer/jquery-ui.css" rel="stylesheet" type="text/css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.min.js" type="text/javascript"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
+  <script type="text/javascript" src="/javascripts/jquery.socialbutton-1.8.1.js"></script>
+  <script type="text/javascript" src="/javascripts/player.js"></script>
+  <script type="text/javascript" src="/javascripts/main.js"></script>
+  <script type="text/javascript" src="/javascripts/voice.js"></script>
+</html>
