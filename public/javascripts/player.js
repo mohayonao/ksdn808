@@ -28,7 +28,7 @@
       BasePlayer.prototype.initialize = function(samplerate, channel) {
         var calcBits;
         this.SAMPLERATE = samplerate;
-        this.CHANNEL = 1;
+        this.CHANNEL = channel;
         calcBits = function(sec) {
           var bits, len;
           bits = 0;
