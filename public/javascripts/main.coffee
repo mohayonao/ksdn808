@@ -385,9 +385,12 @@ $ ->
             @index = 0
 
             for ch, i in CAPTION
-                $li = $(document.createElement("li")).text(ch)\
-                  .click do(i)=>=>@putvoice(i, ON)
-                $("#selector").append $li
+                $div = $(document.createElement("div")).text(ch).click do(i)=>=>@putvoice(i, ON)
+                $label = $(document.createElement("span")).text(i + 1 +"")
+
+                $li = $(document.createElement("li"))
+
+                $("#selector").append $li.append($label.append($div))
 
             player = pico.getplayer SAMPLERATE, 1
             if player
@@ -400,7 +403,7 @@ $ ->
         putvoice: (i, mode)->
             if i != -1
                 @voice = i
-                for li, j in $("#selector li")
+                for li, j in $("#selector li div")
                     if i == j
                         $(li).css("color", "#9f9")\
                             .css("background", "#393")
@@ -750,7 +753,7 @@ $ ->
     # initialize
     sys.add()
     sys.move 0, 0
-    $("#selector li:first").click()
+    $("#selector li:first div").click()
 
     id = location.pathname.substr(1)
     if id then sys.load id

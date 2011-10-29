@@ -488,19 +488,21 @@
     System = (function() {
       function System() {
         this.findIndex = __bind(this.findIndex, this);
-        var $li, ch, i, player, _len;
+        var $div, $label, $li, ch, i, player, _len;
         this.edit = $("#edit");
         this.rpads = [];
         this.voice = 0;
         this.index = 0;
         for (i = 0, _len = CAPTION.length; i < _len; i++) {
           ch = CAPTION[i];
-          $li = $(document.createElement("li")).text(ch).click(__bind(function(i) {
+          $div = $(document.createElement("div")).text(ch).click(__bind(function(i) {
             return __bind(function() {
               return this.putvoice(i, ON);
             }, this);
           }, this)(i));
-          $("#selector").append($li);
+          $label = $(document.createElement("span")).text(i + 1 + "");
+          $li = $(document.createElement("li"));
+          $("#selector").append($li.append($label.append($div)));
         }
         player = pico.getplayer(SAMPLERATE, 1);
         if (player) {
@@ -515,7 +517,7 @@
         var j, li, x, y, _len, _ref4;
         if (i !== -1) {
           this.voice = i;
-          _ref4 = $("#selector li");
+          _ref4 = $("#selector li div");
           for (j = 0, _len = _ref4.length; j < _len; j++) {
             li = _ref4[j];
             if (i === j) {
@@ -1075,7 +1077,7 @@
     });
     sys.add();
     sys.move(0, 0);
-    $("#selector li:first").click();
+    $("#selector li:first div").click();
     id = location.pathname.substr(1);
     if (id) {
       return sys.load(id);
