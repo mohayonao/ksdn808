@@ -385,7 +385,8 @@ $ ->
             @index = 0
 
             for ch, i in CAPTION
-                $div = $(document.createElement("div")).text(ch).click do(i)=>=>@putvoice(i, ON)
+                $div = $(document.createElement("div")).text(ch)
+                    .click do(i)=>=>@putvoice(i, ON, OFF)
                 $label = $(document.createElement("span")).text(i + 1 +"")
 
                 $li = $(document.createElement("li"))
@@ -400,7 +401,7 @@ $ ->
             else
                 $("#play").attr("disabled", true)
 
-        putvoice: (i, mode)->
+        putvoice: (i, mode, move)->
             if i != -1
                 @voice = i
                 for li, j in $("#selector li div")
@@ -413,6 +414,8 @@ $ ->
             x = (@index % PATTERN_SIZE) | 0
             y = (@index / PATTERN_SIZE) | 0
             @rpads[(y/3)|0].rhythm.tap(Vo, x, mode)
+
+            if move then @move 1, 0
 
         tapcallback: (id, index, type, mode)->
             len = @rpads.length * 3
@@ -688,9 +691,9 @@ $ ->
                  "3".charCodeAt(0), "4".charCodeAt(0),\
                  "5".charCodeAt(0), "7".charCodeAt(0),\
                  "6".charCodeAt(0), "8".charCodeAt(0)
-                sys.putvoice(e.keyCode - "1".charCodeAt(0), ON)
+                sys.putvoice(e.keyCode - "1".charCodeAt(0), ON, ON)
             when "0".charCodeAt(0)
-                sys.putvoice(-1, OFF)
+                sys.putvoice(-1, OFF, ON)
 
             when "X".charCodeAt(0) then sys.operate CLS
             when "C".charCodeAt(0) then sys.operate COPY

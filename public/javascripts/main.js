@@ -497,7 +497,7 @@
           ch = CAPTION[i];
           $div = $(document.createElement("div")).text(ch).click(__bind(function(i) {
             return __bind(function() {
-              return this.putvoice(i, ON);
+              return this.putvoice(i, ON, OFF);
             }, this);
           }, this)(i));
           $label = $(document.createElement("span")).text(i + 1 + "");
@@ -513,7 +513,7 @@
           $("#play").attr("disabled", true);
         }
       }
-      System.prototype.putvoice = function(i, mode) {
+      System.prototype.putvoice = function(i, mode, move) {
         var j, li, x, y, _len, _ref4;
         if (i !== -1) {
           this.voice = i;
@@ -529,7 +529,10 @@
         }
         x = (this.index % PATTERN_SIZE) | 0;
         y = (this.index / PATTERN_SIZE) | 0;
-        return this.rpads[(y / 3) | 0].rhythm.tap(Vo, x, mode);
+        this.rpads[(y / 3) | 0].rhythm.tap(Vo, x, mode);
+        if (move) {
+          return this.move(1, 0);
+        }
       };
       System.prototype.tapcallback = function(id, index, type, mode) {
         var len, x, y;
@@ -963,10 +966,10 @@
         case "7".charCodeAt(0):
         case "6".charCodeAt(0):
         case "8".charCodeAt(0):
-          sys.putvoice(e.keyCode - "1".charCodeAt(0), ON);
+          sys.putvoice(e.keyCode - "1".charCodeAt(0), ON, ON);
           break;
         case "0".charCodeAt(0):
-          sys.putvoice(-1, OFF);
+          sys.putvoice(-1, OFF, ON);
           break;
         case "X".charCodeAt(0):
           sys.operate(CLS);
