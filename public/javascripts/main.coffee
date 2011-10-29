@@ -727,7 +727,8 @@ $ ->
             when "S".charCodeAt(0) then sys.put 1
             when "D".charCodeAt(0) then sys.put 2
             when "Z".charCodeAt(0) then $("#options").click()
-            when "N".charCodeAt(0) then $("#add").click()
+            when "N".charCodeAt(0)
+                if e.shiftKey then $("#add").click()
             else console.log "??", e.keyCode, e
         e.preventDefault()
 

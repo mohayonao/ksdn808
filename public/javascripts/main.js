@@ -1044,7 +1044,9 @@
           $("#options").click();
           break;
         case "N".charCodeAt(0):
-          $("#add").click();
+          if (e.shiftKey) {
+            $("#add").click();
+          }
           break;
         default:
           console.log("??", e.keyCode, e);
