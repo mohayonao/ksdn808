@@ -725,10 +725,10 @@ $ ->
                 val = ($filter.val()|0) + 1
                 if val == -4 then val = 0
                 $filter.val(val).change()
-            when "H".charCodeAt(0) then sys.move -1,  0
-            when "L".charCodeAt(0) then sys.move +1,  0
-            when "K".charCodeAt(0) then sys.move  0, -1
-            when "J".charCodeAt(0) then sys.move  0, +1
+            when "H".charCodeAt(0), 37 then sys.move -1,  0
+            when "L".charCodeAt(0), 39 then sys.move +1,  0
+            when "K".charCodeAt(0), 38 then sys.move  0, -1
+            when "J".charCodeAt(0), 40 then sys.move  0, +1
             when "A".charCodeAt(0) then sys.put 0
             when "S".charCodeAt(0) then sys.put 1
             when "D".charCodeAt(0) then sys.put 2
