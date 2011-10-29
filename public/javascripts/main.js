@@ -1025,15 +1025,19 @@
           $filter.val(val).change();
           break;
         case "H".charCodeAt(0):
+        case 37:
           sys.move(-1, 0);
           break;
         case "L".charCodeAt(0):
+        case 39:
           sys.move(+1, 0);
           break;
         case "K".charCodeAt(0):
+        case 38:
           sys.move(0, -1);
           break;
         case "J".charCodeAt(0):
+        case 40:
           sys.move(0, +1);
           break;
         case "A".charCodeAt(0):
