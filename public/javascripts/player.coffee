@@ -21,7 +21,7 @@ do (pico)->
 
         initialize: (samplerate, channel)->
             @SAMPLERATE = samplerate
-            @CHANNEL = 1
+            @CHANNEL = channel
 
             calcBits = (sec)->
                 bits = 0

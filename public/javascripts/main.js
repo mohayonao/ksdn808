@@ -488,19 +488,21 @@
     System = (function() {
       function System() {
         this.findIndex = __bind(this.findIndex, this);
-        var $li, ch, i, player, _len;
+        var $div, $label, $li, ch, i, player, _len;
         this.edit = $("#edit");
         this.rpads = [];
         this.voice = 0;
         this.index = 0;
         for (i = 0, _len = CAPTION.length; i < _len; i++) {
           ch = CAPTION[i];
-          $li = $(document.createElement("li")).text(ch).click(__bind(function(i) {
+          $div = $(document.createElement("div")).text(ch).click(__bind(function(i) {
             return __bind(function() {
-              return this.putvoice(i, ON);
+              return this.putvoice(i, ON, OFF);
             }, this);
           }, this)(i));
-          $("#selector").append($li);
+          $label = $(document.createElement("span")).text(i + 1 + "");
+          $li = $(document.createElement("li"));
+          $("#selector").append($li.append($label.append($div)));
         }
         player = pico.getplayer(SAMPLERATE, 1);
         if (player) {
@@ -511,11 +513,11 @@
           $("#play").attr("disabled", true);
         }
       }
-      System.prototype.putvoice = function(i, mode) {
+      System.prototype.putvoice = function(i, mode, move) {
         var j, li, x, y, _len, _ref4;
         if (i !== -1) {
           this.voice = i;
-          _ref4 = $("#selector li");
+          _ref4 = $("#selector li div");
           for (j = 0, _len = _ref4.length; j < _len; j++) {
             li = _ref4[j];
             if (i === j) {
@@ -527,7 +529,10 @@
         }
         x = (this.index % PATTERN_SIZE) | 0;
         y = (this.index / PATTERN_SIZE) | 0;
-        return this.rpads[(y / 3) | 0].rhythm.tap(Vo, x, mode);
+        this.rpads[(y / 3) | 0].rhythm.tap(Vo, x, mode);
+        if (move) {
+          return this.move(1, 0);
+        }
       };
       System.prototype.tapcallback = function(id, index, type, mode) {
         var len, x, y;
@@ -961,10 +966,10 @@
         case "7".charCodeAt(0):
         case "6".charCodeAt(0):
         case "8".charCodeAt(0):
-          sys.putvoice(e.keyCode - "1".charCodeAt(0), ON);
+          sys.putvoice(e.keyCode - "1".charCodeAt(0), ON, ON);
           break;
         case "0".charCodeAt(0):
-          sys.putvoice(-1, OFF);
+          sys.putvoice(-1, OFF, ON);
           break;
         case "X".charCodeAt(0):
           sys.operate(CLS);
@@ -1044,7 +1049,9 @@
           $("#options").click();
           break;
         case "N".charCodeAt(0):
-          $("#add").click();
+          if (e.shiftKey) {
+            $("#add").click();
+          }
           break;
         default:
           console.log("??", e.keyCode, e);
@@ -1073,7 +1080,7 @@
     });
     sys.add();
     sys.move(0, 0);
-    $("#selector li:first").click();
+    $("#selector li:first div").click();
     id = location.pathname.substr(1);
     if (id) {
       return sys.load(id);

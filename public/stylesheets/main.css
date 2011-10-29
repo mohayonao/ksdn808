@@ -43,6 +43,8 @@ header h1 a {
     border-radius: 5px;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
+    
+    white-space: nowrap;
 }
 
 #console button {
@@ -57,29 +59,39 @@ header h1 a {
 }
 
 #selector {
-    position: relative;
-    float: right;
-    width: 280px;
-    margin: 6px 0px 0px 0px;
+    display: inline;
+    width: 270px;
+    margin: 3px 0px 0px 25px;
     padding: 0px;
     list-style: none;
     text-align: right;
 }
 
 #selector li {
+    cursor: hand;
+    display: inline;
+    margin-left: 5px;
+}
+
+#selector li div {
     color: white;
     background: #ccc;
 
+    font-size: 14px;
+
     padding: 3px;
-    margin-left: 10px;
-    font-weight: bold;
-    cursor: hand;
+    width: 25px;
+    margin: 0px;
     
+    display: inline;
+    font-weight: bold;
     border-radius: 2px;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
+}
 
-    display: inline;
+#selector li span {
+    font-size: 10px;
 }
 
 #options-panel {
