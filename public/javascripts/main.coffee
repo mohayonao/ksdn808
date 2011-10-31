@@ -398,7 +398,7 @@ $ ->
 
                 $("#selector").append $li.append($label.append($div))
 
-            player = pico.getplayer SAMPLERATE, 1
+            player = pico.getplayer {samplerate:SAMPLERATE, channel:1}
             if player
                 @generator = new RhythmGenerator(@, player, V)
                 @filter = new IIRFilter(NONE, @generator.player.SAMPLERATE)
@@ -500,8 +500,13 @@ $ ->
 
             $div = $(document.createElement("div"))
 
+            userAgent = navigator.userAgent
+
             $ctrl = $(document.createElement("div"))
             $ctrl.addClass("ctrl")
+
+            if userAgent.indexOf("Opera") != -1
+                $ctrl.css("margin-top", "-100px") # ??? ugly..
 
             id = new Date().getTime()
             $ctrl.append $(document.createElement("button")).text("up")\
@@ -766,4 +771,5 @@ $ ->
     id = location.pathname.substr(1)
     if id then sys.load id
     else sys.initpattern()
+
 

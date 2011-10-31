@@ -500,7 +500,10 @@
           $li = $(document.createElement("li"));
           $("#selector").append($li.append($label.append($div)));
         }
-        player = pico.getplayer(SAMPLERATE, 1);
+        player = pico.getplayer({
+          samplerate: SAMPLERATE,
+          channel: 1
+        });
         if (player) {
           this.generator = new RhythmGenerator(this, player, V);
           this.filter = new IIRFilter(NONE, this.generator.player.SAMPLERATE);
@@ -632,13 +635,17 @@
         }
       };
       System.prototype.add = function() {
-        var $ctrl, $div, canvas, id;
+        var $ctrl, $div, canvas, id, userAgent;
         if (this.rpads.length >= 8) {
           return -1;
         }
         $div = $(document.createElement("div"));
+        userAgent = navigator.userAgent;
         $ctrl = $(document.createElement("div"));
         $ctrl.addClass("ctrl");
+        if (userAgent.indexOf("Opera") !== -1) {
+          $ctrl.css("margin-top", "-100px");
+        }
         id = new Date().getTime();
         $ctrl.append($(document.createElement("button")).text("up").click(__bind(function(id) {
           return __bind(function() {
