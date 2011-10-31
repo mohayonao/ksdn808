@@ -254,16 +254,7 @@
         this.sys = sys;
         this.player = player;
         console.log("samplerate", this.player.SAMPLERATE);
-        this._filter = null;
-        this._sample = 0;
-        this._sampleCounter = 0;
-        this._index = 0;
-        this._src = [0, 0, 0, 0];
-        this._wavIndex = [0, 0, 0, 0];
-        this._voiceId = -1;
         stretch = this.player.SAMPLERATE / SAMPLERATE;
-        this._filterIndex = 0;
-        this._filterIndexStep = 0;
         lst = [];
         for (i = 0, _len = waves.length; i < _len; i++) {
           wave = waves[i];
@@ -279,6 +270,16 @@
           lst[i] = waveStretch(data, (data.length * stretch + 0.5) | 0);
         }
         this._wavData = lst;
+        this._filter = null;
+        this._sample = 0;
+        this._sampleCounter = 0;
+        this._index = 0;
+        this._src = [0, 0, 0, 0];
+        this._vol = [2.0, 0, 0, 1.0];
+        this._wavlet = [0, this._wavData[SD], this._wavData[BD], 0];
+        this._wavIndex = [0, 0, 0, 0];
+        this._filterIndex = 0;
+        this._filterIndexStep = 0;
         this.chbpm(180);
         this.chvol(8);
       }
@@ -306,42 +307,49 @@
         return this._sampleLimit = this.player.SAMPLERATE * interval;
       };
       RhythmGenerator.prototype.chvol = function(val) {
-        return this.vol = val / 10;
+        return this._vol[Vo] = val / 10;
       };
       RhythmGenerator.prototype.next = function() {
-        var cellsize, cnt, cutoff, i, i2, j, k, lv, m, maxIndex, n, rpads, stream, type, vol, vstream, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _voiceId, _wavData, _wavIndex;
+        var cellsize, cnt, cutoff, i, i2, j, k, m, maxIndex, n, rpads, stream, type, vstream, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref10, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _vol, _wavData, _wavIndex, _wavlet;
         cnt = this.player.STREAM_CELL_COUNT;
         cellsize = this.player.STREAM_CELL_SIZE;
         rpads = this.sys.rpads;
         maxIndex = rpads.length * PATTERN_SIZE;
-        vol = this.vol;
         _ref4 = [this._index, this._src], _index = _ref4[0], _src = _ref4[1];
-        _ref5 = [this._sample, this._sampleLimit], _sample = _ref5[0], _sampleLimit = _ref5[1];
-        _ref6 = [this._wavData, this._wavIndex, this._voiceId], _wavData = _ref6[0], _wavIndex = _ref6[1], _voiceId = _ref6[2];
-        _ref7 = [this._filter, this._filterIndex, this._filterIndexStep], _filter = _ref7[0], _filterIndex = _ref7[1], _filterIndexStep = _ref7[2];
+        _ref5 = [this._wavlet, this._vol], _wavlet = _ref5[0], _vol = _ref5[1];
+        _ref6 = [this._sample, this._sampleLimit], _sample = _ref6[0], _sampleLimit = _ref6[1];
+        _ref7 = [this._wavData, this._wavIndex], _wavData = _ref7[0], _wavIndex = _ref7[1];
+        _ref8 = [this._filter, this._filterIndex, this._filterIndexStep], _filter = _ref8[0], _filterIndex = _ref8[1], _filterIndexStep = _ref8[2];
+        i2 = (_index - 1 + maxIndex) % maxIndex;
+        m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
+        n = (i2 % PATTERN_SIZE) | 0;
+        rpads[m].rhythm.led(n, OFF);
         stream = new Float32Array(cellsize * cnt);
         k = 0;
         for (i = 0; 0 <= cnt ? i < cnt : i > cnt; 0 <= cnt ? i++ : i--) {
           _sample -= cellsize;
           if (_sample <= 0) {
-            i2 = (_index - 1 + maxIndex) % maxIndex;
-            m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
-            n = (i2 % PATTERN_SIZE) | 0;
-            rpads[m].rhythm.led(n, OFF);
             i2 = (_index + maxIndex) % maxIndex;
             m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
             n = (i2 % PATTERN_SIZE) | 0;
-            rpads[m].rhythm.led(n, ON);
             _src = rpads[m].rhythm.pattern[n];
-            _ref8 = [HH, SD, BD];
-            for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
-              type = _ref8[_i];
-              if (_src[type] !== 0) {
-                _wavIndex[type] = 0;
-              }
+            if (_src[HH] === 1) {
+              _wavlet[HH] = _wavData[HH];
+              _wavIndex[HH] = 0;
+            } else if (_src[HH] === 2) {
+              _wavlet[HH] = _wavData[3];
+              _wavIndex[HH] = 0;
+            }
+            if (_src[SD]) {
+              _vol[SD] = [0, 0.4, 1.0][_src[SD]];
+              _wavIndex[SD] = 0;
+            }
+            if (_src[BD]) {
+              _vol[BD] = [0, 0.3, 0.6][_src[BD]];
+              _wavIndex[BD] = 0;
             }
             if (_src[Vo] !== 0) {
-              _voiceId = _src[Vo] + 3;
+              _wavlet[Vo] = _wavData[_src[Vo] + 3];
               _wavIndex[Vo] = 0;
             }
             _index = (_index + 1) % maxIndex;
@@ -350,27 +358,14 @@
           vstream = new Float32Array(cellsize);
           _k = k;
           for (j = 0; 0 <= cellsize ? j < cellsize : j > cellsize; 0 <= cellsize ? j++ : j--) {
-            if (_src[HH] === 1) {
-              stream[k] += _wavData[HH][_wavIndex[HH] | 0] * 2.0 || 0.0;
-              _wavIndex[HH] += 1;
-            } else if (_src[HH] === 2) {
-              stream[k] += _wavData[3][_wavIndex[HH] | 0] * 2.0 || 0.0;
-              _wavIndex[HH] += 1;
+            _ref9 = [HH, SD, BD];
+            for (_i = 0, _len = _ref9.length; _i < _len; _i++) {
+              type = _ref9[_i];
+              stream[k] += _wavlet[type][_wavIndex[type] | 0] * _vol[type] || 0.0;
+              _wavIndex[type] += 1;
             }
-            if (_src[SD]) {
-              lv = [0, 0.4, 1.0][_src[SD]];
-              stream[k] += _wavData[SD][_wavIndex[SD] | 0] * lv || 0.0;
-              _wavIndex[SD] += 1;
-            }
-            if (_src[BD]) {
-              lv = [0, 0.3, 0.6][_src[BD]];
-              stream[k] += _wavData[BD][_wavIndex[BD] | 0] * lv || 0.0;
-              _wavIndex[BD] += 1;
-            }
-            if (_voiceId !== -1) {
-              vstream[j] += _wavData[_voiceId][_wavIndex[Vo] | 0] * vol || 0.0;
-              _wavIndex[Vo] += 1;
-            }
+            vstream[j] += _wavlet[Vo][_wavIndex[Vo] | 0] * _vol[Vo] || 0.0;
+            _wavIndex[Vo] += 1;
             k += 1;
           }
           if (_filter) {
@@ -399,7 +394,8 @@
             stream[_k + _j] += vstream[_j];
           }
         }
-        for (i = 0, _ref9 = stream.length; 0 <= _ref9 ? i < _ref9 : i > _ref9; 0 <= _ref9 ? i++ : i--) {
+        rpads[m].rhythm.led(n, ON);
+        for (i = 0, _ref10 = stream.length; 0 <= _ref10 ? i < _ref10 : i > _ref10; 0 <= _ref10 ? i++ : i--) {
           if (stream[i] < -1.0) {
             stream[i] = -1.0;
           } else if (stream[i] > 1.0) {
@@ -409,7 +405,6 @@
         this._index = _index;
         this._src = _src;
         this._sample = _sample;
-        this._voiceId = _voiceId;
         this._filterIndex = _filterIndex;
         return stream;
       };

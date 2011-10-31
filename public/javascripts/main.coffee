@@ -175,19 +175,7 @@ $ ->
             @player = player
             console.log "samplerate", @player.SAMPLERATE
 
-            @_filter = null
-            @_sample = 0
-            @_sampleCounter = 0
-            @_index = 0
-            @_src = [ 0, 0, 0, 0 ]
-            @_wavIndex = [ 0, 0, 0, 0 ]
-            @_voiceId = -1
             stretch = @player.SAMPLERATE / SAMPLERATE
-
-            @_filterIndex = 0
-            @_filterIndexStep = 0
-
-
             lst = []
             for wave, i in waves
                 binary = atob(wave)
@@ -200,6 +188,19 @@ $ ->
                     data[j] = x / 65535
                 lst[i] = waveStretch(data, (data.length * stretch + 0.5)|0)
             @_wavData = lst
+
+            @_filter = null
+            @_sample = 0
+            @_sampleCounter = 0
+            @_index = 0
+            @_src = [ 0, 0, 0, 0 ]
+            @_vol = [ 2.0, 0, 0, 1.0 ]
+            @_wavlet  = [ 0, @_wavData[SD], @_wavData[BD], 0 ]
+            @_wavIndex = [ 0, 0, 0, 0 ]
+
+
+            @_filterIndex = 0
+            @_filterIndexStep = 0
 
             @chbpm 180
             @chvol   8
@@ -226,40 +227,52 @@ $ ->
             @_sampleLimit = @player.SAMPLERATE * interval
 
         chvol: (val)->
-            @vol = val/10
+            @_vol[Vo] = val/10
 
         next: () ->
             cnt = @player.STREAM_CELL_COUNT
             cellsize = @player.STREAM_CELL_SIZE
             rpads = @sys.rpads
             maxIndex = rpads.length * PATTERN_SIZE
-            vol = @vol
             [_index,_src] = [@_index,@_src]
+            [_wavlet, _vol] = [@_wavlet,@_vol]
             [_sample,_sampleLimit] = [@_sample,@_sampleLimit]
-            [_wavData,_wavIndex,_voiceId] = [@_wavData,@_wavIndex,@_voiceId]
+            [_wavData,_wavIndex] = [@_wavData,@_wavIndex]
             [_filter,_filterIndex,_filterIndexStep] = [@_filter,@_filterIndex,@_filterIndexStep]
+
+            i2 = (_index - 1 + maxIndex) % maxIndex
+            m = ((i2 / PATTERN_SIZE) | 0) % rpads.length
+            n = ((i2 % PATTERN_SIZE) | 0)
+            rpads[m].rhythm.led(n, OFF)
 
             stream = new Float32Array(cellsize * cnt)
             k = 0
             for i in [0...cnt]
                 _sample -= cellsize
                 if _sample <= 0
-                    i2 = (_index - 1 + maxIndex) % maxIndex
-                    m = ((i2 / PATTERN_SIZE) | 0) % rpads.length
-                    n = ((i2 % PATTERN_SIZE) | 0)
-                    rpads[m].rhythm.led(n, OFF)
-
                     i2 = (_index + maxIndex) % maxIndex
                     m = ((i2 / PATTERN_SIZE) | 0) % rpads.length
                     n = ((i2 % PATTERN_SIZE) | 0)
-                    rpads[m].rhythm.led(n, ON)
 
                     _src = rpads[m].rhythm.pattern[n]
 
-                    for type in [HH, SD, BD]
-                        if _src[type] != 0 then _wavIndex[type] = 0
+                    if _src[HH] == 1
+                        _wavlet[HH] = _wavData[HH]
+                        _wavIndex[HH] = 0
+                    else if _src[HH] == 2
+                        _wavlet[HH] = _wavData[3] # OPENHH
+                        _wavIndex[HH] = 0
+
+                    if _src[SD]
+                        _vol[SD] = [0,0.4,1.0][_src[SD]]
+                        _wavIndex[SD] = 0
+
+                    if _src[BD]
+                        _vol[BD] = [0,0.3,0.6][_src[BD]]
+                        _wavIndex[BD] = 0
+
                     if _src[Vo] != 0
-                        _voiceId = _src[Vo] + 3
+                        _wavlet[Vo] = _wavData[_src[Vo] + 3]
                         _wavIndex[Vo] = 0
                     _index = (_index + 1) % maxIndex
                     _sample += _sampleLimit
@@ -267,25 +280,14 @@ $ ->
                 vstream = new Float32Array(cellsize)
                 _k = k
                 for j in [0...cellsize]
-                    if _src[HH] == 1
-                        stream[k] += (_wavData[HH][_wavIndex[HH]|0])*2.0 || 0.0
-                        _wavIndex[HH] += 1
-                    else if _src[HH] == 2
-                        stream[k] += (_wavData[3][_wavIndex[HH]|0])*2.0 || 0.0
-                        _wavIndex[HH] += 1
-                    if _src[SD]
-                        lv = [0,0.4,1.0][_src[SD]]
-                        stream[k] += (_wavData[SD][_wavIndex[SD]|0])*lv || 0.0
-                        _wavIndex[SD] += 1
-                    if _src[BD]
-                        lv = [0,0.3,0.6][_src[BD]]
-                        stream[k] += (_wavData[BD][_wavIndex[BD]|0])*lv || 0.0
-                        _wavIndex[BD] += 1
+                    for type in [HH, SD, BD]
+                        stream[k] += (_wavlet[type][_wavIndex[type]|0])*_vol[type] || 0.0
+                        _wavIndex[type] += 1
 
-                    if _voiceId != -1
-                        vstream[j] += (_wavData[_voiceId][_wavIndex[Vo]|0]*vol || 0.0)
-                        _wavIndex[Vo] += 1
+                    vstream[j] += (_wavlet[Vo][_wavIndex[Vo]|0]*_vol[Vo] || 0.0)
+                    _wavIndex[Vo] += 1
                     k += 1
+
                 if _filter
                     _filterIndex += _filterIndexStep
                     if _filterIndex >= 1024 then _filterIndex -= 1024
@@ -301,6 +303,9 @@ $ ->
                 for _j in [0...cellsize]
                     stream[_k+_j] += vstream[_j]
 
+
+            rpads[m].rhythm.led(n, ON)
+
             for i in [0...stream.length]
                 if stream[i] < -1.0 then stream[i] = -1.0
                 else if stream[i] > 1.0 then stream[i] = 1.0
@@ -308,7 +313,6 @@ $ ->
             @_index = _index
             @_src = _src
             @_sample = _sample
-            @_voiceId = _voiceId
             @_filterIndex = _filterIndex
 
             return stream
