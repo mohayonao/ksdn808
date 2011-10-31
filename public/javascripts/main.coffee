@@ -85,6 +85,7 @@ $ ->
                         when OFF
                             val -= 1
                             if val < 0 then val = 2
+                            @velocity = val
                         when MOVE
                             val = @velocity
                     @pattern[index][type] = val
@@ -141,7 +142,7 @@ $ ->
                     when BD then y = h - 10
 
                 c.beginPath()
-                c.arc(x + dx/2, y, size[@pattern[index][type]], 0, PI2)
+                c.arc(x + dx/2, y, size[@pattern[index][type]], 0, PI2, false)
                 c.fill()
                 c.closePath()
 
@@ -200,7 +201,7 @@ $ ->
                 lst[i] = waveStretch(data, (data.length * stretch + 0.5)|0)
             @_wavData = lst
 
-            @chbpm 120
+            @chbpm 180
             @chvol   8
 
         isPlaying: ()->@player.isPlaying()
@@ -244,16 +245,16 @@ $ ->
                 _sample -= cellsize
                 if _sample <= 0
                     i2 = (_index - 1 + maxIndex) % maxIndex
-                    i = ((i2 / PATTERN_SIZE) | 0) % rpads.length
-                    j = ((i2 % PATTERN_SIZE) | 0)
-                    rpads[i].rhythm.led(j, OFF)
+                    m = ((i2 / PATTERN_SIZE) | 0) % rpads.length
+                    n = ((i2 % PATTERN_SIZE) | 0)
+                    rpads[m].rhythm.led(n, OFF)
 
                     i2 = (_index + maxIndex) % maxIndex
-                    i = ((i2 / PATTERN_SIZE) | 0) % rpads.length
-                    j = ((i2 % PATTERN_SIZE) | 0)
-                    rpads[i].rhythm.led(j, ON)
+                    m = ((i2 / PATTERN_SIZE) | 0) % rpads.length
+                    n = ((i2 % PATTERN_SIZE) | 0)
+                    rpads[m].rhythm.led(n, ON)
 
-                    _src = rpads[i].rhythm.pattern[j]
+                    _src = rpads[m].rhythm.pattern[n]
 
                     for type in [HH, SD, BD]
                         if _src[type] != 0 then _wavIndex[type] = 0
@@ -625,7 +626,7 @@ $ ->
     $("#options").click -> $("#options-panel").slideToggle("fast")
     $("#save").click -> sys.save()
 
-    $bpm = $("#bpm").slider min:60, max:240, value:120, step:1,
+    $bpm = $("#bpm").slider min:60, max:300, value:180, step:1,
         change: (e, ui)->
             val = ui.value | 0
             $("#bpm-val").text val

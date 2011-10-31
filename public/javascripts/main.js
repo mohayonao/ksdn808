@@ -144,6 +144,7 @@
                 if (val < 0) {
                   val = 2;
                 }
+                this.velocity = val;
                 break;
               case MOVE:
                 val = this.velocity;
@@ -215,7 +216,7 @@
               y = h - 10;
           }
           c.beginPath();
-          c.arc(x + dx / 2, y, size[this.pattern[index][type]], 0, PI2);
+          c.arc(x + dx / 2, y, size[this.pattern[index][type]], 0, PI2, false);
           c.fill();
           _results.push(c.closePath());
         }
@@ -278,7 +279,7 @@
           lst[i] = waveStretch(data, (data.length * stretch + 0.5) | 0);
         }
         this._wavData = lst;
-        this.chbpm(120);
+        this.chbpm(180);
         this.chvol(8);
       }
       RhythmGenerator.prototype.isPlaying = function() {
@@ -308,7 +309,7 @@
         return this.vol = val / 10;
       };
       RhythmGenerator.prototype.next = function() {
-        var cellsize, cnt, cutoff, i, i2, j, k, lv, maxIndex, rpads, stream, type, vol, vstream, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _voiceId, _wavData, _wavIndex;
+        var cellsize, cnt, cutoff, i, i2, j, k, lv, m, maxIndex, n, rpads, stream, type, vol, vstream, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _voiceId, _wavData, _wavIndex;
         cnt = this.player.STREAM_CELL_COUNT;
         cellsize = this.player.STREAM_CELL_SIZE;
         rpads = this.sys.rpads;
@@ -324,14 +325,14 @@
           _sample -= cellsize;
           if (_sample <= 0) {
             i2 = (_index - 1 + maxIndex) % maxIndex;
-            i = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
-            j = (i2 % PATTERN_SIZE) | 0;
-            rpads[i].rhythm.led(j, OFF);
+            m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
+            n = (i2 % PATTERN_SIZE) | 0;
+            rpads[m].rhythm.led(n, OFF);
             i2 = (_index + maxIndex) % maxIndex;
-            i = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
-            j = (i2 % PATTERN_SIZE) | 0;
-            rpads[i].rhythm.led(j, ON);
-            _src = rpads[i].rhythm.pattern[j];
+            m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
+            n = (i2 % PATTERN_SIZE) | 0;
+            rpads[m].rhythm.led(n, ON);
+            _src = rpads[m].rhythm.pattern[n];
             _ref8 = [HH, SD, BD];
             for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
               type = _ref8[_i];
@@ -853,8 +854,8 @@
     });
     $bpm = $("#bpm").slider({
       min: 60,
-      max: 240,
-      value: 120,
+      max: 300,
+      value: 180,
       step: 1
     }, {
       change: function(e, ui) {
