@@ -5,11 +5,13 @@ body {
 
 header {
     width: 880px;
+    height: 50px;
 }
 
 header h1 {
+    float: left;
     font-family: 'Michroma', sans-serif;
-    display: inline;
+    margin: 0px;
 }
 
 header h1 a {
@@ -47,24 +49,29 @@ header h1 a {
     white-space: nowrap;
 }
 
+#console section {
+    float: left;
+    height: 40px;
+}
+
 #console button {
     width: 75px;
 }
 
+
 #save-msg {
     border: solid 1px #333;
     background: transparent;
-    width: 250px;
+    width: 300px;
     color: white;
+    margin-left: 10px;
 }
 
 #selector {
-    display: inline;
-    width: 270px;
-    margin: 3px 0px 0px 25px;
+    width: 300px;
     padding: 0px;
+    margin: 5px 10px 0px 10px;
     list-style: none;
-    text-align: right;
 }
 
 #selector li {
@@ -90,11 +97,15 @@ header h1 a {
     -moz-border-radius: 2px;
 }
 
-#selector li span {
-    font-size: 10px;
+#spectrum {
+    background: black;
+    width: 380px;
+    height: 50px;
 }
 
+
 #options-panel {
+
     height: 80px;
     margin: 5px 0px 0px 10px;
     display: none;
@@ -166,12 +177,18 @@ header h1 a {
     width: 880px;
     background: #999;
     margin-top: 10px;
-    padding-bottom: 5px;
+    padding: 5px 0px;
 
     border-radius: 5px;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
 }
+
+
+#selector li span {
+    font-size: 10px;
+}
+
 
 #edit canvas {
     width: 800px;

@@ -14,7 +14,7 @@
     if (!(window.Float32Array != null)) {
       __bind(function() {
         console.warn("Float32Array are not defined, so use fake.");
-        return window.Float32Array = (function() {
+        return window.Float32Array = window.Uint32Array = (function() {
           __extends(_Class, Array);
           function _Class(spec) {
             var i, _ref;
@@ -332,7 +332,7 @@
       if (spec.duration > 50) {
         spec.duration = 50;
       }
-      if (typeof webkitAudioContext === "function") {
+      if (typeof webkitAudioContext === "function" || typeof webkitAudioContext === "object") {
         return new WebkitPlayer(spec);
       } else if (typeof Audio === "function" || typeof Audio === "object") {
         a = new Audio();

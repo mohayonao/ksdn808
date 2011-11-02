@@ -189,7 +189,6 @@ $ ->
                 lst[i] = waveStretch(data, (data.length * stretch + 0.5)|0)
             @_wavData = lst
 
-            @_filter = null
             @_sample = 0
             @_sampleCounter = 0
             @_index = 0
@@ -200,8 +199,11 @@ $ ->
             @_drumStep = 1.5
 
 
+            @_filter = null
             @_filterIndex = 0
             @_filterIndexStep = 0
+
+            @_viewer = null
 
             @chbpm 180
             @chvol   8
@@ -219,6 +221,9 @@ $ ->
 
         setfilter: (filter)->
             @_filter = filter
+
+        setviewer: (viewer)->
+            @_viewer = viewer
 
         chfilterrate: (val)->
             @_filterIndexStep = val * 1024 / @player.SAMPLERATE
@@ -292,7 +297,7 @@ $ ->
                         stream[k] += (_wavlet[type][_wavIndex[type]|0])*_vol[type] || 0.0
                         _wavIndex[type] += _drumStep
 
-                    vstream[j] += (_wavlet[Vo][_wavIndex[Vo]|0]*_vol[Vo] || 0.0)
+                    vstream[j] += (_wavlet[Vo][_wavIndex[Vo]|0]*(_vol[Vo]) || 0.0)
                     _wavIndex[Vo] += 1
                     k += 1
 
@@ -311,12 +316,13 @@ $ ->
                 for _j in [0...cellsize]
                     stream[_k+_j] += vstream[_j]
 
-
             rpads[m].rhythm.led(n, ON)
 
             for i in [0...stream.length]
                 if stream[i] < -1.0 then stream[i] = -1.0
                 else if stream[i] > 1.0 then stream[i] = 1.0
+
+            @_viewer.draw stream if @_viewer
 
             @_index = _index
             @_src = _src
@@ -390,6 +396,45 @@ $ ->
             @_damp = Math.min(2 * (1 - Math.pow(resonance, 0.25)), Math.min(2, 2/@_freq - @_freq*0.5))
 
 
+
+    class SpectrumViewer
+        constructor: (buffersize, samplerate, canvas)->
+            @canvas = canvas
+            @context = canvas.getContext("2d")
+            $canvas = $(canvas)
+            @width = canvas.width = $canvas.width()
+            @height = canvas.height = $canvas.height()
+
+            @_fft = new FFT(buffersize, samplerate)
+            @context.fillStyle = "white"
+
+            @_count = 0
+
+        draw: (stream)->
+            fft = @_fft
+            fft.forward stream
+
+            h = @height
+            c = @context
+
+            div = fft.sampleRate / 11025 / 2
+
+            spectrum = fft.spectrum
+            jmax = (spectrum.length / div) / 32
+            imax = spectrum.length / jmax
+
+            c.fillStyle = "rgba(0, 32, 0, 0.25)"
+            c.fillRect(0, 0, @width, h)
+
+            c.fillStyle = "rgba(224, 255, 224, 0.80)"
+            for i in [0...imax]
+                v = 0
+                for j in [0...jmax]
+                    v += spectrum[i * jmax + j]
+                y = h * (v * 1.5)
+                c.fillRect(i * jmax, h - y, jmax - 1, y)
+
+
     class System
         constructor: ->
             @edit = $("#edit")
@@ -408,9 +453,16 @@ $ ->
 
             player = pico.getplayer {samplerate:SAMPLERATE, channel:1}
             if player
+                samplerate = player.SAMPLERATE
+                buffersize = player.STREAM_FULL_SIZE
+
                 @generator = new RhythmGenerator(@, player, V)
-                @filter = new IIRFilter(NONE, @generator.player.SAMPLERATE)
+                @filter = new IIRFilter(NONE, samplerate)
                 @generator.setfilter @filter
+
+                scanvas = document.getElementById("spectrum")
+                @spectrum = new SpectrumViewer(buffersize, samplerate, scanvas)
+                @generator.setviewer @spectrum
             else
                 $("#play").attr("disabled", true)
 

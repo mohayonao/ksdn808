@@ -1,7 +1,7 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $(function() {
-    var $bpm, $filter, $gain, $pitch, $rate, $res, $save_msg, $vol, BD, BP12, BR12, CAPTION, CLS, COPY, DEBUG, DEL, DOWN, HH, HP12, IIRFilter, LP12, MOVE, NONE, OFF, ON, PATTERN_SIZE, PI2, RhythmGenerator, RhythmPad, SAMPLERATE, SD, System, UP, Vo, i, id, sb, sintable, social_url, sys, waveStretch, _ref, _ref2, _ref3;
+    var $bpm, $filter, $gain, $pitch, $rate, $res, $save_msg, $vol, BD, BP12, BR12, CAPTION, CLS, COPY, DEBUG, DEL, DOWN, HH, HP12, IIRFilter, LP12, MOVE, NONE, OFF, ON, PATTERN_SIZE, PI2, RhythmGenerator, RhythmPad, SAMPLERATE, SD, SpectrumViewer, System, UP, Vo, i, id, sb, sintable, social_url, sys, waveStretch, _ref, _ref2, _ref3;
     PI2 = Math.PI * 2;
     SAMPLERATE = 11025;
     CAPTION = "関西電気保安協会";
@@ -270,7 +270,6 @@
           lst[i] = waveStretch(data, (data.length * stretch + 0.5) | 0);
         }
         this._wavData = lst;
-        this._filter = null;
         this._sample = 0;
         this._sampleCounter = 0;
         this._index = 0;
@@ -279,8 +278,10 @@
         this._wavlet = [0, this._wavData[SD], this._wavData[BD], 0];
         this._wavIndex = [0, 0, 0, 0];
         this._drumStep = 1.5;
+        this._filter = null;
         this._filterIndex = 0;
         this._filterIndexStep = 0;
+        this._viewer = null;
         this.chbpm(180);
         this.chvol(8);
         this.chpitch(0);
@@ -298,6 +299,9 @@
       };
       RhythmGenerator.prototype.setfilter = function(filter) {
         return this._filter = filter;
+      };
+      RhythmGenerator.prototype.setviewer = function(viewer) {
+        return this._viewer = viewer;
       };
       RhythmGenerator.prototype.chfilterrate = function(val) {
         return this._filterIndexStep = val * 1024 / this.player.SAMPLERATE;
@@ -319,7 +323,7 @@
           v = 5;
         }
         this._pitch = val;
-        return this._drumStep = [0.6, 0.7, 0.8, 0.9, 1.0, 1.10, 1.25, 1.5, 1.75][val + 4];
+        return this._drumStep = [0.75, 0.8, 0.9, 0.95, 1.0, 1.1, 1.2, 1.25, 1.3][val + 4];
       };
       RhythmGenerator.prototype.next = function() {
         var cellsize, cnt, cutoff, i, i2, j, k, m, maxIndex, n, rpads, stream, type, vstream, _drumStep, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref10, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _vol, _wavData, _wavIndex, _wavlet;
@@ -414,6 +418,9 @@
             stream[i] = 1.0;
           }
         }
+        if (this._viewer) {
+          this._viewer.draw(stream);
+        }
         this._index = _index;
         this._src = _src;
         this._sample = _sample;
@@ -493,10 +500,48 @@
       };
       return IIRFilter;
     })();
+    SpectrumViewer = (function() {
+      function SpectrumViewer(buffersize, samplerate, canvas) {
+        var $canvas;
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
+        $canvas = $(canvas);
+        this.width = canvas.width = $canvas.width();
+        this.height = canvas.height = $canvas.height();
+        this._fft = new FFT(buffersize, samplerate);
+        this.context.fillStyle = "white";
+        this._count = 0;
+      }
+      SpectrumViewer.prototype.draw = function(stream) {
+        var c, div, fft, h, i, imax, j, jmax, spectrum, v, y, _results;
+        fft = this._fft;
+        fft.forward(stream);
+        h = this.height;
+        c = this.context;
+        div = fft.sampleRate / 11025 / 2;
+        spectrum = fft.spectrum;
+        jmax = (spectrum.length / div) / 32;
+        imax = spectrum.length / jmax;
+        c.fillStyle = "rgba(0, 32, 0, 0.25)";
+        c.fillRect(0, 0, this.width, h);
+        c.fillStyle = "rgba(224, 255, 224, 0.80)";
+        _results = [];
+        for (i = 0; 0 <= imax ? i < imax : i > imax; 0 <= imax ? i++ : i--) {
+          v = 0;
+          for (j = 0; 0 <= jmax ? j < jmax : j > jmax; 0 <= jmax ? j++ : j--) {
+            v += spectrum[i * jmax + j];
+          }
+          y = h * (v * 1.5);
+          _results.push(c.fillRect(i * jmax, h - y, jmax - 1, y));
+        }
+        return _results;
+      };
+      return SpectrumViewer;
+    })();
     System = (function() {
       function System() {
         this.findIndex = __bind(this.findIndex, this);
-        var $div, $label, $li, ch, i, player, _len;
+        var $div, $label, $li, buffersize, ch, i, player, samplerate, scanvas, _len;
         this.edit = $("#edit");
         this.rpads = [];
         this.voice = 0;
@@ -517,9 +562,14 @@
           channel: 1
         });
         if (player) {
+          samplerate = player.SAMPLERATE;
+          buffersize = player.STREAM_FULL_SIZE;
           this.generator = new RhythmGenerator(this, player, V);
-          this.filter = new IIRFilter(NONE, this.generator.player.SAMPLERATE);
+          this.filter = new IIRFilter(NONE, samplerate);
           this.generator.setfilter(this.filter);
+          scanvas = document.getElementById("spectrum");
+          this.spectrum = new SpectrumViewer(buffersize, samplerate, scanvas);
+          this.generator.setviewer(this.spectrum);
         } else {
           $("#play").attr("disabled", true);
         }

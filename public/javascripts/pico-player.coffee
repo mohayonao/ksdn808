@@ -10,7 +10,7 @@ do (window, pico)->
     # for Opera
     if not window.Float32Array? then do ()=>
         console.warn "Float32Array are not defined, so use fake."
-        window.Float32Array = class extends Array
+        window.Float32Array = window.Uint32Array = class extends Array
             constructor: (spec)->
                 if typeof spec == "number"
                     spec |= 0
@@ -286,7 +286,7 @@ do (window, pico)->
         if spec.duration > 50 then spec.duration = 50
 
 
-        if typeof webkitAudioContext == "function"
+        if typeof webkitAudioContext == "function" or typeof webkitAudioContext == "object"
             return new WebkitPlayer(spec)
         else if typeof Audio == "function" or typeof Audio == "object"
             a = new Audio()
