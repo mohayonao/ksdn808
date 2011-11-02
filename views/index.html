@@ -31,33 +31,47 @@
       <input id="save-msg" />
       <ul id="selector"></ul>
       <div id="options-panel">
-        <div class="slider">
-          <label>BPM</label><div id="bpm"></div><var id="bpm-val">180</var>
-        </div>
-        <div class="slider">
-          <label>VOL</label><div id="vol"></div><var id="vol-val">8</var>
-        </div>
-        <div class="slider filter-select">
-          <label>FILTER</label>
-          <select id="filter">
-            <option value="-1">NONE</option>
-            <option value="0">LP12</option>
-            <option value="1">HP12</option>
-            <option value="2">BP12</option>
-            <option value="3">BR12</option>
-          </select>
-        </div>
-        <div class="slider">
-          <label>GAIN</label><div id="gain"></div><var id="gain-val">4</var>
-        </div>
-        <div class="slider">
-          <label>RATE</label><div id="rate"></div><var id="rate-val">1</var>
-        </div>
-        <div class="slider">
-          <label>Q</label><div id="res"></div><var id="res-val">0.1</var>
-        </div>
+        <section>
+          <div class="slider">
+            <label>BPM</label><div id="bpm"></div><var id="bpm-val">180</var>
+          </div>
+        </section>
+        <section>
+          <div class="slider">
+            <label>Vocal Volume</label><div id="vol"></div><var id="vol-val">8</var>
+          </div>
+          <div class="slider">
+            <label>Drum Pitch</label><div id="pitch"></div><var id="pitch-val">0</var>
+          </div>
+        </section>
+        <section class="no-border">
+          <div class="slider filter-select">
+            <label>Filter</label>
+            <select id="filter">
+              <option value="-1">NONE</option>
+              <option value="0">LP12</option>
+              <option value="1">HP12</option>
+              <option value="2">BP12</option>
+              <option value="3">BR12</option>
+            </select>
+          </div>
+          <div class="slider">
+            <label>Gain</label><div id="gain"></div><var id="gain-val">4</var>
+          </div>
+        </section>
+        <section>
+          <div>
+            <div class="slider">
+              <label>Rate</label><div id="rate"></div><var id="rate-val">1</var>
+            </div>
+            <div class="slider">
+              <label>Resonance</label><div id="res"></div><var id="res-val">0.1</var>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </div> 
+    
     <div id="patterns">
       <div id="edit"></div>
       <section id="help">

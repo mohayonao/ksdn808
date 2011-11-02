@@ -1,7 +1,7 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $(function() {
-    var $bpm, $filter, $gain, $rate, $res, $save_msg, $vol, BD, BP12, BR12, CAPTION, CLS, COPY, DEBUG, DEL, DOWN, HH, HP12, IIRFilter, LP12, MOVE, NONE, OFF, ON, PATTERN_SIZE, PI2, RhythmGenerator, RhythmPad, SAMPLERATE, SD, System, UP, Vo, i, id, sb, sintable, social_url, sys, waveStretch, _ref, _ref2, _ref3;
+    var $bpm, $filter, $gain, $pitch, $rate, $res, $save_msg, $vol, BD, BP12, BR12, CAPTION, CLS, COPY, DEBUG, DEL, DOWN, HH, HP12, IIRFilter, LP12, MOVE, NONE, OFF, ON, PATTERN_SIZE, PI2, RhythmGenerator, RhythmPad, SAMPLERATE, SD, System, UP, Vo, i, id, sb, sintable, social_url, sys, waveStretch, _ref, _ref2, _ref3;
     PI2 = Math.PI * 2;
     SAMPLERATE = 11025;
     CAPTION = "関西電気保安協会";
@@ -278,10 +278,12 @@
         this._vol = [2.0, 0, 0, 1.0];
         this._wavlet = [0, this._wavData[SD], this._wavData[BD], 0];
         this._wavIndex = [0, 0, 0, 0];
+        this._drumStep = 1.5;
         this._filterIndex = 0;
         this._filterIndexStep = 0;
         this.chbpm(180);
         this.chvol(8);
+        this.chpitch(0);
       }
       RhythmGenerator.prototype.isPlaying = function() {
         return this.player.isPlaying();
@@ -309,8 +311,18 @@
       RhythmGenerator.prototype.chvol = function(val) {
         return this._vol[Vo] = val / 10;
       };
+      RhythmGenerator.prototype.chpitch = function(val) {
+        var v;
+        if (val < 1) {
+          v = 1;
+        } else if (val > 5) {
+          v = 5;
+        }
+        this._pitch = val;
+        return this._drumStep = [0.6, 0.7, 0.8, 0.9, 1.0, 1.10, 1.25, 1.5, 1.75][val + 4];
+      };
       RhythmGenerator.prototype.next = function() {
-        var cellsize, cnt, cutoff, i, i2, j, k, m, maxIndex, n, rpads, stream, type, vstream, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref10, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _vol, _wavData, _wavIndex, _wavlet;
+        var cellsize, cnt, cutoff, i, i2, j, k, m, maxIndex, n, rpads, stream, type, vstream, _drumStep, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref10, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _vol, _wavData, _wavIndex, _wavlet;
         cnt = this.player.STREAM_CELL_COUNT;
         cellsize = this.player.STREAM_CELL_SIZE;
         rpads = this.sys.rpads;
@@ -318,7 +330,7 @@
         _ref4 = [this._index, this._src], _index = _ref4[0], _src = _ref4[1];
         _ref5 = [this._wavlet, this._vol], _wavlet = _ref5[0], _vol = _ref5[1];
         _ref6 = [this._sample, this._sampleLimit], _sample = _ref6[0], _sampleLimit = _ref6[1];
-        _ref7 = [this._wavData, this._wavIndex], _wavData = _ref7[0], _wavIndex = _ref7[1];
+        _ref7 = [this._wavData, this._wavIndex, this._drumStep], _wavData = _ref7[0], _wavIndex = _ref7[1], _drumStep = _ref7[2];
         _ref8 = [this._filter, this._filterIndex, this._filterIndexStep], _filter = _ref8[0], _filterIndex = _ref8[1], _filterIndexStep = _ref8[2];
         i2 = (_index - 1 + maxIndex) % maxIndex;
         m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
@@ -362,7 +374,7 @@
             for (_i = 0, _len = _ref9.length; _i < _len; _i++) {
               type = _ref9[_i];
               stream[k] += _wavlet[type][_wavIndex[type] | 0] * _vol[type] || 0.0;
-              _wavIndex[type] += 1;
+              _wavIndex[type] += _drumStep;
             }
             vstream[j] += _wavlet[Vo][_wavIndex[Vo] | 0] * _vol[Vo] || 0.0;
             _wavIndex[Vo] += 1;
@@ -566,6 +578,9 @@
       System.prototype.chvol = function(val) {
         return this.generator.chvol(val);
       };
+      System.prototype.chpitch = function(val) {
+        return this.generator.chpitch(val);
+      };
       System.prototype.chrate = function(val) {
         return this.generator.chfilterrate(val);
       };
@@ -756,6 +771,7 @@
           }).call(this),
           bpm: $bpm.slider("value"),
           vol: $vol.slider("value"),
+          pitch: $pitch.slider("value"),
           filter: $filter.val() | 0,
           gain: $gain.slider("value"),
           rate: $rate.slider("value"),
@@ -782,6 +798,9 @@
             }
             if (data.vol) {
               $vol.slider("value", data.vol);
+            }
+            if (data.pitch) {
+              $pitch.slider("value", data.vol);
             }
             if (data.filter) {
               $filter.val(data.filter).change();
@@ -890,6 +909,25 @@
         val = ui.value | 0;
         $("#vol-val").text(val);
         return sys.chvol(val);
+      }
+    });
+    $pitch = $("#pitch").slider({
+      min: -4,
+      max: 4,
+      value: 0,
+      step: 1
+    }, {
+      change: function(e, ui) {
+        var val;
+        val = ui.value | 0;
+        $("#pitch-val").text(val);
+        return sys.chpitch(val);
+      },
+      slide: function(e, ui) {
+        var val;
+        val = ui.value | 0;
+        $("#pitch-val").text(val);
+        return sys.chpitch(val);
       }
     });
     $gain = $("#gain").slider({

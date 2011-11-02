@@ -197,6 +197,7 @@ $ ->
             @_vol = [ 2.0, 0, 0, 1.0 ]
             @_wavlet  = [ 0, @_wavData[SD], @_wavData[BD], 0 ]
             @_wavIndex = [ 0, 0, 0, 0 ]
+            @_drumStep = 1.5
 
 
             @_filterIndex = 0
@@ -204,6 +205,7 @@ $ ->
 
             @chbpm 180
             @chvol   8
+            @chpitch 0
 
         isPlaying: ()->@player.isPlaying()
 
@@ -229,6 +231,12 @@ $ ->
         chvol: (val)->
             @_vol[Vo] = val/10
 
+        chpitch: (val)->
+            if val < 1 then v = 1
+            else if val > 5 then v = 5
+            @_pitch = val
+            @_drumStep = [0.75, 0.8, 0.9, 0.95, 1.0, 1.1, 1.2, 1.25, 1.3][val+4]
+
         next: () ->
             cnt = @player.STREAM_CELL_COUNT
             cellsize = @player.STREAM_CELL_SIZE
@@ -237,7 +245,7 @@ $ ->
             [_index,_src] = [@_index,@_src]
             [_wavlet, _vol] = [@_wavlet,@_vol]
             [_sample,_sampleLimit] = [@_sample,@_sampleLimit]
-            [_wavData,_wavIndex] = [@_wavData,@_wavIndex]
+            [_wavData,_wavIndex, _drumStep] = [@_wavData,@_wavIndex, @_drumStep]
             [_filter,_filterIndex,_filterIndexStep] = [@_filter,@_filterIndex,@_filterIndexStep]
 
             i2 = (_index - 1 + maxIndex) % maxIndex
@@ -282,7 +290,7 @@ $ ->
                 for j in [0...cellsize]
                     for type in [HH, SD, BD]
                         stream[k] += (_wavlet[type][_wavIndex[type]|0])*_vol[type] || 0.0
-                        _wavIndex[type] += 1
+                        _wavIndex[type] += _drumStep
 
                     vstream[j] += (_wavlet[Vo][_wavIndex[Vo]|0]*_vol[Vo] || 0.0)
                     _wavIndex[Vo] += 1
@@ -445,6 +453,7 @@ $ ->
 
         chbpm: (val) -> @generator.chbpm val
         chvol: (val) -> @generator.chvol val
+        chpitch: (val) -> @generator.chpitch val
         chrate: (val) -> @generator.chfilterrate val
 
         chfilter: (val) -> @filter.chtype val
@@ -572,6 +581,7 @@ $ ->
             dict = pattern: ( p.rhythm.pattern for p in @rpads )
             bpm: $bpm.slider("value")
             vol: $vol.slider("value")
+            pitch: $pitch.slider("value")
             filter: $filter.val() | 0
             gain: $gain.slider("value")
             rate: $rate.slider("value")
@@ -591,6 +601,7 @@ $ ->
 
                     if data.bpm then $bpm.slider("value", data.bpm)
                     if data.vol then $vol.slider("value", data.vol)
+                    if data.pitch then $pitch.slider("value", data.vol)
                     if data.filter then $filter.val(data.filter).change()
                     if data.gain then $gain.slider("value", data.gain)
                     if data.rate then $rate.slider("value", data.rate)
@@ -655,6 +666,17 @@ $ ->
             val = ui.value | 0
             $("#vol-val").text val
             sys.chvol val
+
+    $pitch = $("#pitch").slider min:-4, max:4, value:0, step:1,
+        change: (e, ui)->
+            val = ui.value | 0
+            $("#pitch-val").text val
+            sys.chpitch val
+
+        slide: (e, ui)->
+            val = ui.value | 0
+            $("#pitch-val").text val
+            sys.chpitch val
 
     $gain = $("#gain").slider min:0, max:10, value:4, step:1,
         change: (e, ui)->

@@ -95,25 +95,36 @@ header h1 a {
 }
 
 #options-panel {
-    height: 40px;
+    height: 80px;
     margin: 5px 0px 0px 10px;
     display: none;
+}
+
+#options-panel section {
+    float: left;
+    height: 80px;
+    margin-right: 10px;
+    border: solid 0px gray;
+    border-width: 0px 1px 0px 0px;
+}
+
+#options-panel .no-border {
+    border-width: 0px 0px 0px 0px;
 }
 
 .slider {
     width: 130px;
     margin-right: 10px;
-    float: left;
-    border: solid 0px gray;
-    border-width: 0px 1px 0px 0px;
+    height: 35px;
 }
 
 .filter-select {
-    margin-top: 10px;
+    position: relative;
+    top: 15px;
+    height: 40px;
 }
 
-
-.slider:last-child {
+#options-panel section:last-child {
     border-width: 0px;
 }
 
@@ -140,6 +151,8 @@ header h1 a {
     font-family: monospace;
     font-size: 12px;
 }
+
+
 .ui-slider-horizontal {
     height: 0.2em !important;
 }
