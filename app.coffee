@@ -1,5 +1,6 @@
 express = require "express"
 mongoose = require "mongoose"
+fs = require "fs"
 
 mongo_uri = process.env.MONGOHQ_URL || "mongodb://localhost/ksdn808"
 
@@ -35,7 +36,16 @@ Score = mongoose.model "Score"
 app.get "/:id?", (req, res)->
     res.sendfile "views/index.html"
 
-app.get "/api/:sel", (req, res)->
+app.get "/wave/:type/:name", (req, res)->
+    type = req.params.type
+    name = req.params.name
+    filename = "./wave/#{type}-#{name}.json"
+
+    console.log filename
+    fs.readFile filename, (err, data)->
+        res.send if not err then data else "Error"
+
+app.get "/load/:sel", (req, res)->
     sel = req.params.sel
 
     if not sel then res.send "[]"

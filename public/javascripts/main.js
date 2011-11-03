@@ -1,11 +1,15 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $(function() {
-    var $bpm, $filter, $gain, $rate, $res, $save_msg, $vol, BD, BP12, BR12, CAPTION, CLS, COPY, DEBUG, DEL, DOWN, HH, HP12, IIRFilter, LP12, MOVE, NONE, OFF, ON, PATTERN_SIZE, PI2, RhythmGenerator, RhythmPad, SAMPLERATE, SD, System, UP, Vo, i, id, sb, sintable, social_url, sys, waveStretch, _ref, _ref2, _ref3;
+    var $bpm, $drkit, $filter, $gain, $pitch, $rate, $res, $save_msg, $vol, $voset, BD, BP12, BR12, CAPTION, CLS, COPY, CaptionSet, DEBUG, DEL, DOWN, HH, HP12, IIRFilter, LP12, MOVE, NONE, OFF, ON, PATTERN_SIZE, PI2, RhythmGenerator, RhythmPad, SAMPLERATE, SD, SpectrumViewer, System, UP, Vo, i, rotate_select, sb, sintable, social_url, sys, waveStretch, _ref, _ref2, _ref3;
     PI2 = Math.PI * 2;
     SAMPLERATE = 11025;
     CAPTION = "関西電気保安協会";
     PATTERN_SIZE = 16 * 2;
+    CaptionSet = {
+      ksdh: "関,西,電,気,保,安,協,会",
+      ping: "生,存,戦,りゃ,く"
+    };
     DEBUG = 0;
     _ref = [0, 1, 2, 3], HH = _ref[0], SD = _ref[1], BD = _ref[2], Vo = _ref[3];
     _ref2 = [-1, 0, 1, 2, 3], NONE = _ref2[0], LP12 = _ref2[1], HP12 = _ref2[2], BP12 = _ref2[3], BR12 = _ref2[4];
@@ -173,14 +177,14 @@
         x = index * dx;
         c.clearRect(x, 0, dx, h);
         voice = this.pattern[index][Vo];
-        if (voice !== 0) {
+        if (sys.caption && voice !== 0) {
           c.shadowBlur = 0;
           if (this.ledIndex === index) {
             c.fillStyle = "lightyellow";
           } else {
             c.fillStyle = "gray";
           }
-          c.fillText(CAPTION[voice - 1], x + 4, 30, dx);
+          c.fillText((sys.caption[voice - 1] || "＿")[0], x + 4, 30, dx);
         }
         if (this._cursor[0] === index) {
           switch (this._cursor[1]) {
@@ -250,14 +254,41 @@
     };
     RhythmGenerator = (function() {
       function RhythmGenerator(sys, player, waves) {
-        var b0, b1, bb, binary, data, i, j, lst, stretch, wave, x, _len, _ref4;
+        var i;
         this.sys = sys;
         this.player = player;
-        console.log("samplerate", this.player.SAMPLERATE);
+        console.log("" + (player.gettype()));
+        console.log("samplerate: " + player.SAMPLERATE + ", channel: " + player.CHANNEL);
+        this._wavData = (function() {
+          var _results;
+          _results = [];
+          for (i = 0; i <= 12; i++) {
+            _results.push([0]);
+          }
+          return _results;
+        })();
+        this._sample = 0;
+        this._sampleCounter = 0;
+        this._index = 0;
+        this._src = [0, 0, 0, 0];
+        this._vol = [2.0, 0, 0, 1.0];
+        this._wavlet = [0, this._wavData[SD], this._wavData[BD], 0];
+        this._wavIndex = [0, 0, 0, 0];
+        this._drumStep = 1.5;
+        this._filter = null;
+        this._filterIndex = 0;
+        this._filterIndexStep = 0;
+        this._viewer = null;
+        this.chbpm(180);
+        this.chvol(8);
+        this.chpitch(0);
+      }
+      RhythmGenerator.prototype.setWaveSet = function(type, set) {
+        var b0, b1, bb, binary, data, i, j, lst, stretch, wave, x, _len, _ref4, _results;
         stretch = this.player.SAMPLERATE / SAMPLERATE;
         lst = [];
-        for (i = 0, _len = waves.length; i < _len; i++) {
-          wave = waves[i];
+        for (i = 0, _len = set.length; i < _len; i++) {
+          wave = set[i];
           binary = atob(wave);
           data = [];
           for (j = 0, _ref4 = binary.length / 2; 0 <= _ref4 ? j < _ref4 : j > _ref4; 0 <= _ref4 ? j++ : j--) {
@@ -269,20 +300,20 @@
           }
           lst[i] = waveStretch(data, (data.length * stretch + 0.5) | 0);
         }
-        this._wavData = lst;
-        this._filter = null;
-        this._sample = 0;
-        this._sampleCounter = 0;
-        this._index = 0;
-        this._src = [0, 0, 0, 0];
-        this._vol = [2.0, 0, 0, 1.0];
-        this._wavlet = [0, this._wavData[SD], this._wavData[BD], 0];
-        this._wavIndex = [0, 0, 0, 0];
-        this._filterIndex = 0;
-        this._filterIndexStep = 0;
-        this.chbpm(180);
-        this.chvol(8);
-      }
+        if (type === "drKit") {
+          for (i = 0; i <= 3; i++) {
+            this._wavData[i] = lst[i];
+          }
+          this._wavlet[SD] = this._wavData[SD];
+          return this._wavlet[BD] = this._wavData[BD];
+        } else {
+          _results = [];
+          for (i = 4; i <= 12; i++) {
+            _results.push(this._wavData[i] = lst[i - 4]);
+          }
+          return _results;
+        }
+      };
       RhythmGenerator.prototype.isPlaying = function() {
         return this.player.isPlaying();
       };
@@ -297,6 +328,9 @@
       RhythmGenerator.prototype.setfilter = function(filter) {
         return this._filter = filter;
       };
+      RhythmGenerator.prototype.setviewer = function(viewer) {
+        return this._viewer = viewer;
+      };
       RhythmGenerator.prototype.chfilterrate = function(val) {
         return this._filterIndexStep = val * 1024 / this.player.SAMPLERATE;
       };
@@ -309,8 +343,18 @@
       RhythmGenerator.prototype.chvol = function(val) {
         return this._vol[Vo] = val / 10;
       };
+      RhythmGenerator.prototype.chpitch = function(val) {
+        var v;
+        if (val < 1) {
+          v = 1;
+        } else if (val > 5) {
+          v = 5;
+        }
+        this._pitch = val;
+        return this._drumStep = [0.75, 0.8, 0.9, 0.95, 1.0, 1.1, 1.2, 1.25, 1.3][val + 4];
+      };
       RhythmGenerator.prototype.next = function() {
-        var cellsize, cnt, cutoff, i, i2, j, k, m, maxIndex, n, rpads, stream, type, vstream, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref10, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _vol, _wavData, _wavIndex, _wavlet;
+        var cellsize, cnt, cutoff, i, i2, j, k, m, maxIndex, n, rpads, stream, type, vstream, _drumStep, _filter, _filterIndex, _filterIndexStep, _i, _index, _j, _k, _len, _ref10, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _sample, _sampleLimit, _src, _vol, _wavData, _wavIndex, _wavlet;
         cnt = this.player.STREAM_CELL_COUNT;
         cellsize = this.player.STREAM_CELL_SIZE;
         rpads = this.sys.rpads;
@@ -318,7 +362,7 @@
         _ref4 = [this._index, this._src], _index = _ref4[0], _src = _ref4[1];
         _ref5 = [this._wavlet, this._vol], _wavlet = _ref5[0], _vol = _ref5[1];
         _ref6 = [this._sample, this._sampleLimit], _sample = _ref6[0], _sampleLimit = _ref6[1];
-        _ref7 = [this._wavData, this._wavIndex], _wavData = _ref7[0], _wavIndex = _ref7[1];
+        _ref7 = [this._wavData, this._wavIndex, this._drumStep], _wavData = _ref7[0], _wavIndex = _ref7[1], _drumStep = _ref7[2];
         _ref8 = [this._filter, this._filterIndex, this._filterIndexStep], _filter = _ref8[0], _filterIndex = _ref8[1], _filterIndexStep = _ref8[2];
         i2 = (_index - 1 + maxIndex) % maxIndex;
         m = ((i2 / PATTERN_SIZE) | 0) % rpads.length;
@@ -362,7 +406,7 @@
             for (_i = 0, _len = _ref9.length; _i < _len; _i++) {
               type = _ref9[_i];
               stream[k] += _wavlet[type][_wavIndex[type] | 0] * _vol[type] || 0.0;
-              _wavIndex[type] += 1;
+              _wavIndex[type] += _drumStep;
             }
             vstream[j] += _wavlet[Vo][_wavIndex[Vo] | 0] * _vol[Vo] || 0.0;
             _wavIndex[Vo] += 1;
@@ -401,6 +445,9 @@
           } else if (stream[i] > 1.0) {
             stream[i] = 1.0;
           }
+        }
+        if (this._viewer) {
+          this._viewer.draw(stream);
         }
         this._index = _index;
         this._src = _src;
@@ -481,17 +528,54 @@
       };
       return IIRFilter;
     })();
+    SpectrumViewer = (function() {
+      function SpectrumViewer(buffersize, samplerate, canvas) {
+        var $canvas;
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
+        $canvas = $(canvas);
+        this.width = canvas.width = $canvas.width();
+        this.height = canvas.height = $canvas.height();
+        this._fft = new FFT(buffersize, samplerate);
+        this.context.fillStyle = "white";
+        this._count = 0;
+      }
+      SpectrumViewer.prototype.draw = function(stream) {
+        var c, div, fft, h, i, imax, j, jmax, spectrum, v, y, _results;
+        fft = this._fft;
+        fft.forward(stream);
+        h = this.height;
+        c = this.context;
+        div = fft.sampleRate / 11025 / 2;
+        spectrum = fft.spectrum;
+        jmax = (spectrum.length / div) / 32;
+        imax = spectrum.length / jmax;
+        c.fillStyle = "rgba(0, 32, 0, 0.25)";
+        c.fillRect(0, 0, this.width, h);
+        c.fillStyle = "rgba(224, 255, 224, 0.80)";
+        _results = [];
+        for (i = 0; 0 <= imax ? i < imax : i > imax; 0 <= imax ? i++ : i--) {
+          v = 0;
+          for (j = 0; 0 <= jmax ? j < jmax : j > jmax; 0 <= jmax ? j++ : j--) {
+            v += spectrum[i * jmax + j];
+          }
+          y = h * (v * 1.5);
+          _results.push(c.fillRect(i * jmax, h - y, jmax - 1, y));
+        }
+        return _results;
+      };
+      return SpectrumViewer;
+    })();
     System = (function() {
       function System() {
         this.findIndex = __bind(this.findIndex, this);
-        var $div, $label, $li, ch, i, player, _len;
+        var $div, $label, $li, buffersize, i, player, samplerate, scanvas;
         this.edit = $("#edit");
         this.rpads = [];
         this.voice = 0;
         this.index = 0;
-        for (i = 0, _len = CAPTION.length; i < _len; i++) {
-          ch = CAPTION[i];
-          $div = $(document.createElement("div")).text(ch).click(__bind(function(i) {
+        for (i = 0; i <= 8; i++) {
+          $div = $(document.createElement("div")).text("").click(__bind(function(i) {
             return __bind(function() {
               return this.putvoice(i, ON, OFF);
             }, this);
@@ -505,9 +589,14 @@
           channel: 1
         });
         if (player) {
+          samplerate = player.SAMPLERATE;
+          buffersize = player.STREAM_FULL_SIZE;
           this.generator = new RhythmGenerator(this, player, V);
-          this.filter = new IIRFilter(NONE, this.generator.player.SAMPLERATE);
+          this.filter = new IIRFilter(NONE, samplerate);
           this.generator.setfilter(this.filter);
+          scanvas = document.getElementById("spectrum");
+          this.spectrum = new SpectrumViewer(buffersize, samplerate, scanvas);
+          this.generator.setviewer(this.spectrum);
         } else {
           $("#play").attr("disabled", true);
         }
@@ -565,6 +654,9 @@
       };
       System.prototype.chvol = function(val) {
         return this.generator.chvol(val);
+      };
+      System.prototype.chpitch = function(val) {
+        return this.generator.chpitch(val);
       };
       System.prototype.chrate = function(val) {
         return this.generator.chfilterrate(val);
@@ -742,7 +834,7 @@
         }
       };
       System.prototype.save = function() {
-        var dict, p;
+        var dict, p, _ref4, _ref5, _ref6;
         dict = {
           pattern: (function() {
             var _i, _len, _ref4, _results;
@@ -755,8 +847,11 @@
             return _results;
           }).call(this),
           bpm: $bpm.slider("value"),
+          voset: (_ref4 = $voset.val()) != null ? _ref4 : "ksdh",
+          drkit: (_ref5 = $drkit.val()) != null ? _ref5 : "tr808",
           vol: $vol.slider("value"),
-          filter: $filter.val() | 0,
+          pitch: $pitch.slider("value"),
+          filter: (_ref6 = $filter.val()) != null ? _ref6 : NONE,
           gain: $gain.slider("value"),
           rate: $rate.slider("value"),
           res: $res.slider("value")
@@ -771,20 +866,30 @@
         });
       };
       System.prototype.load = function(id) {
-        return $.get("/api/" + id, __bind(function(res) {
-          var data, i, j, p, _ref4, _results;
+        return $.get("/load/" + id, __bind(function(res) {
+          var data, i, j, p, _ref4, _ref5, _ref6, _ref7, _results;
           if (!res) {
             return $save_msg.val("no data");
           } else {
             data = JSON.parse(res);
+            console.log(data);
             if (data.bpm) {
               $bpm.slider("value", data.bpm);
+            }
+            if (data.voset) {
+              $voset.val((_ref4 = data.voset) != null ? _ref4 : "ksdh");
+            }
+            if (data.drkit) {
+              $drkit.val((_ref5 = data.drkit) != null ? _ref5 : "tr808");
             }
             if (data.vol) {
               $vol.slider("value", data.vol);
             }
+            if (data.pitch) {
+              $pitch.slider("value", data.vol);
+            }
             if (data.filter) {
-              $filter.val(data.filter).change();
+              $filter.val((_ref6 = data.filter) != null ? _ref6 : NONE);
             }
             if (data.gain) {
               $gain.slider("value", data.gain);
@@ -795,11 +900,14 @@
             if (data.res) {
               $res.slider("value", data.res);
             }
+            $voset.change();
+            $drkit.change();
+            $filter.change();
             if (!data.pattern) {
               return $save_msg.val("no data");
             } else {
               _results = [];
-              for (i = 0, _ref4 = data.pattern.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
+              for (i = 0, _ref7 = data.pattern.length; 0 <= _ref7 ? i < _ref7 : i > _ref7; 0 <= _ref7 ? i++ : i--) {
                 if (i === 0) {
                   p = this.rpads[0];
                 } else {
@@ -821,8 +929,49 @@
           }
         }, this));
       };
+      System.prototype.setwave = function(type, name) {
+        var data, item_name, voput;
+        item_name = "" + type + "-" + name;
+        data = localStorage.getItem(item_name);
+        voput = __bind(function() {
+          var caps, div, i, p, _i, _len, _len2, _ref4, _ref5, _results;
+          if (type === "voSet") {
+            caps = CaptionSet[name].split(",");
+            _ref4 = $("#selector li div");
+            for (i = 0, _len = _ref4.length; i < _len; i++) {
+              div = _ref4[i];
+              $(div).text(caps[i] || "_");
+            }
+            this.caption = caps;
+            _ref5 = this.rpads;
+            _results = [];
+            for (_i = 0, _len2 = _ref5.length; _i < _len2; _i++) {
+              p = _ref5[_i];
+              _results.push((function() {
+                var _results2;
+                _results2 = [];
+                for (i = 0; 0 <= PATTERN_SIZE ? i < PATTERN_SIZE : i > PATTERN_SIZE; 0 <= PATTERN_SIZE ? i++ : i--) {
+                  _results2.push(p.rhythm.draw(i));
+                }
+                return _results2;
+              })());
+            }
+            return _results;
+          }
+        }, this);
+        if (data != null) {
+          this.generator.setWaveSet(type, JSON.parse(data));
+          return voput();
+        } else {
+          return $.get("/wave/" + type + "/" + name, __bind(function(res) {
+            localStorage.setItem(item_name, res);
+            this.generator.setWaveSet(type, JSON.parse(res));
+            return voput();
+          }, this));
+        }
+      };
       System.prototype.initpattern = function() {
-        var i, r, _results;
+        var i, r;
         r = this.rpads[0].rhythm;
         r.pattern[0][Vo] = 1;
         r.pattern[4][Vo] = 2;
@@ -832,11 +981,11 @@
         r.pattern[20][Vo] = 6;
         r.pattern[24][Vo] = 7;
         r.pattern[28][Vo] = 8;
-        _results = [];
         for (i = 0; 0 <= PATTERN_SIZE ? i < PATTERN_SIZE : i > PATTERN_SIZE; 0 <= PATTERN_SIZE ? i++ : i--) {
-          _results.push(r.draw(i));
+          r.draw(i);
         }
-        return _results;
+        $voset.val("ksdh").change();
+        return $drkit.val("tr808").change();
       };
       return System;
     })();
@@ -873,6 +1022,12 @@
         return sys.chbpm(val);
       }
     });
+    $voset = $('#vocal-set').change(function(e) {
+      return sys.setwave("voSet", $voset.val());
+    });
+    $drkit = $('#drum-kit').change(function(e) {
+      return sys.setwave("drKit", $drkit.val());
+    });
     $vol = $("#vol").slider({
       min: 0,
       max: 10,
@@ -891,6 +1046,28 @@
         $("#vol-val").text(val);
         return sys.chvol(val);
       }
+    });
+    $pitch = $("#pitch").slider({
+      min: -4,
+      max: 4,
+      value: 0,
+      step: 1
+    }, {
+      change: function(e, ui) {
+        var val;
+        val = ui.value | 0;
+        $("#pitch-val").text(val);
+        return sys.chpitch(val);
+      },
+      slide: function(e, ui) {
+        var val;
+        val = ui.value | 0;
+        $("#pitch-val").text(val);
+        return sys.chpitch(val);
+      }
+    });
+    $filter = $("#filter").change(function(e) {
+      return sys.chfilter($filter.val() | 0);
     });
     $gain = $("#gain").slider({
       min: 0,
@@ -949,11 +1126,28 @@
         return sys.chres(val);
       }
     });
-    $filter = $("#filter").change(function(e) {
-      return sys.chfilter($filter.val() | 0);
-    });
+    rotate_select = function(target) {
+      var change, current_value, find, o, _i, _len, _ref4, _ref5;
+      current_value = target.val();
+      _ref4 = [false, false], find = _ref4[0], change = _ref4[1];
+      _ref5 = $("option", target);
+      for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
+        o = _ref5[_i];
+        if (find) {
+          target.val($(o).val());
+          change = true;
+          break;
+        }
+        if ($(o).val() === current_value) {
+          find = true;
+        }
+      }
+      if (!change) {
+        target.val($("option:first", target).val());
+      }
+      return target.change();
+    };
     $(document).keydown(function(e) {
-      var val;
       if (e.ctrlKey || e.metaKey) {
         return;
       }
@@ -969,6 +1163,7 @@
         case "7".charCodeAt(0):
         case "6".charCodeAt(0):
         case "8".charCodeAt(0):
+        case "9".charCodeAt(0):
           sys.putvoice(e.keyCode - "1".charCodeAt(0), ON, ON);
           break;
         case "0".charCodeAt(0):
@@ -1021,11 +1216,7 @@
           $res.slider("value", $res.slider("value") + 0.05);
           break;
         case "F".charCodeAt(0):
-          val = ($filter.val() | 0) + 1;
-          if (val === -4) {
-            val = 0;
-          }
-          $filter.val(val).change();
+          rotate_select($filter);
           break;
         case "H".charCodeAt(0):
         case 37:
@@ -1088,11 +1279,14 @@
     sys.add();
     sys.move(0, 0);
     $("#selector li:first div").click();
-    id = location.pathname.substr(1);
-    if (id) {
-      return sys.load(id);
-    } else {
-      return sys.initpattern();
-    }
+    return setTimeout(function() {
+      var id;
+      id = location.pathname.substr(1);
+      if (id) {
+        return sys.load(id);
+      } else {
+        return sys.initpattern();
+      }
+    }, 500);
   });
 }).call(this);
