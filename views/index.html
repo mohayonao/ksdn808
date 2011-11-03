@@ -15,7 +15,7 @@
   </head>
   <body>
     <header>
-      <h1><a href="/">KSDN-808</a></h1>
+      <h1><a href="/">KSDN-808</a><em>II</em></h1>
       <div id="social-button">
         <div class="hatena"></div>
         <div class="tweet"></div>
@@ -43,6 +43,23 @@
           </div>
         </section>
         <section>
+          <div class="slider select">
+            <label>Vocal Set</label>
+            <select id="vocal-set">
+              <option value="ksdh">関西電気保安協会</option>
+              <option value="ping">生存戦略</option>
+            </select>
+          </div>
+          <div class="slider select">
+            <label>Drum Kit</label>
+            <select id="drum-kit">
+              <option value="tr808">TR-808</option>
+              <option value="std">Rock</option>
+              <option value="ele">Electric</option>
+            </select>
+          </div>
+        </section>
+        <section>
           <div class="slider">
             <label>Vocal Volume</label><div id="vol"></div><var id="vol-val">8</var>
           </div>
@@ -51,7 +68,7 @@
           </div>
         </section>
         <section class="no-border">
-          <div class="slider filter-select">
+          <div class="slider select">
             <label>Filter</label>
             <select id="filter">
               <option value="-1">NONE</option>
@@ -94,8 +111,8 @@
           <li>[ A ] →カーソルに音を外す</li>
           <li>[ S ] →カーソルに音を置く (弱く)</li>
           <li>[ D ] →カーソルに音を置く (強く)</li>
-          <li>[ 1 .. 8 ] → カーソル列に関西電気保安協会を置く</li>
-          <li>[ 0 ] → カーソル列の関西電気保安協会を外す</li>
+          <li>[ 1 .. 9 ] → カーソル列にボーカルを置く</li>
+          <li>[ 0 ] → カーソル列のボーカルを外す</li>
         </ul>
         <ul>
           <li>[ X ] → パターンクリア</li>
@@ -106,7 +123,7 @@
           <li>[ F ] → フィルタの切り替え</li>
           <br/>
           <li>[ Q, W ] → BPMの上下</li>
-          <li>[ E, R ] → 関西電気保安協会の音量の上下</li>
+          <li>[ E, R ] → ボーカルの音量の上下</li>
           <li>[ T, Y ] → フィルタのゲインの上下</li>
           <li>[ U, I ] → フィルタのスピードの上下</li>
           <li>[ O, P ] → フィルタのカットオフの上下</li>

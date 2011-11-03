@@ -5,6 +5,10 @@ $ ->
     CAPTION = "関西電気保安協会"
     PATTERN_SIZE = 16 * 2
 
+    CaptionSet =
+        ksdh: "関,西,電,気,保,安,協,会",
+        ping: "生,存,戦,りゃ,く"
+
     DEBUG = 0
 
     # enumerate
@@ -111,13 +115,13 @@ $ ->
             c.clearRect(x, 0, dx, h)
 
             voice = @pattern[index][Vo]
-            if voice != 0
+            if sys.caption and voice != 0
                 c.shadowBlur = 0
                 if @ledIndex == index
                     c.fillStyle = "lightyellow"
                 else
                     c.fillStyle = "gray"
-                c.fillText(CAPTION[voice-1], x+4, 30, dx)
+                c.fillText((sys.caption[voice-1] or "＿")[0], x+4, 30, dx)
 
             if @_cursor[0] == index
                 switch @_cursor[1]
@@ -169,25 +173,15 @@ $ ->
         return result
 
 
+
     class RhythmGenerator
         constructor: (sys, player, waves)->
             @sys = sys
             @player = player
-            console.log "samplerate", @player.SAMPLERATE
+            console.log "#{player.gettype()}"
+            console.log "samplerate: #{player.SAMPLERATE}, channel: #{player.CHANNEL}"
 
-            stretch = @player.SAMPLERATE / SAMPLERATE
-            lst = []
-            for wave, i in waves
-                binary = atob(wave)
-                data = []
-                for j in [0...binary.length/2]
-                    b0 = binary.charCodeAt(j * 2)
-                    b1 = binary.charCodeAt(j * 2 + 1)
-                    bb = (b1 << 8) + b0
-                    x = if bb & 0x8000 then -((bb^0xFFFF)+1) else bb
-                    data[j] = x / 65535
-                lst[i] = waveStretch(data, (data.length * stretch + 0.5)|0)
-            @_wavData = lst
+            @_wavData = ( [0] for i in [0..12] )
 
             @_sample = 0
             @_sampleCounter = 0
@@ -198,7 +192,6 @@ $ ->
             @_wavIndex = [ 0, 0, 0, 0 ]
             @_drumStep = 1.5
 
-
             @_filter = null
             @_filterIndex = 0
             @_filterIndexStep = 0
@@ -208,6 +201,30 @@ $ ->
             @chbpm 180
             @chvol   8
             @chpitch 0
+
+        setWaveSet: (type, set)->
+            stretch = @player.SAMPLERATE / SAMPLERATE
+
+            lst = []
+            for wave, i in set
+                binary = atob(wave)
+                data = []
+                for j in [0...binary.length/2]
+                    b0 = binary.charCodeAt(j * 2)
+                    b1 = binary.charCodeAt(j * 2 + 1)
+                    bb = (b1 << 8) + b0
+                    x = if bb & 0x8000 then -((bb^0xFFFF)+1) else bb
+                    data[j] = x / 65535
+                lst[i] = waveStretch(data, (data.length * stretch + 0.5)|0)
+
+            if type == "drKit"
+                for i in [0..3]
+                    @_wavData[i] = lst[i]
+                @_wavlet[SD] = @_wavData[SD]
+                @_wavlet[BD] = @_wavData[BD]
+            else
+                for i in [4..12]
+                    @_wavData[i] = lst[i-4]
 
         isPlaying: ()->@player.isPlaying()
 
@@ -435,6 +452,7 @@ $ ->
                 c.fillRect(i * jmax, h - y, jmax - 1, y)
 
 
+
     class System
         constructor: ->
             @edit = $("#edit")
@@ -442,8 +460,8 @@ $ ->
             @voice = 0
             @index = 0
 
-            for ch, i in CAPTION
-                $div = $(document.createElement("div")).text(ch)
+            for i in [0..8]
+                $div = $(document.createElement("div")).text("")
                     .click do(i)=>=>@putvoice(i, ON, OFF)
                 $label = $(document.createElement("span")).text(i + 1 +"")
 
@@ -632,9 +650,11 @@ $ ->
         save: ()->
             dict = pattern: ( p.rhythm.pattern for p in @rpads )
             bpm: $bpm.slider("value")
+            voset: $voset.val() ? "ksdh"
+            drkit: $drkit.val() ? "tr808"
             vol: $vol.slider("value")
             pitch: $pitch.slider("value")
-            filter: $filter.val() | 0
+            filter: $filter.val() ? NONE
             gain: $gain.slider("value")
             rate: $rate.slider("value")
             res : $res .slider("value")
@@ -645,19 +665,27 @@ $ ->
                 $save_msg.val url
 
         load: (id)->
-            $.get "/api/" + id, (res)=>
+            $.get "/load/#{id}", (res)=>
                 if not res
                     $save_msg.val "no data"
                 else
                     data = JSON.parse(res)
 
+                    console.log data
+
                     if data.bpm then $bpm.slider("value", data.bpm)
+                    if data.voset then $voset.val(data.voset ? "ksdh")
+                    if data.drkit then $drkit.val(data.drkit ? "tr808")
                     if data.vol then $vol.slider("value", data.vol)
                     if data.pitch then $pitch.slider("value", data.vol)
-                    if data.filter then $filter.val(data.filter).change()
+                    if data.filter then $filter.val(data.filter ? NONE)
                     if data.gain then $gain.slider("value", data.gain)
                     if data.rate then $rate.slider("value", data.rate)
                     if data.res  then $res.slider("value", data.res)
+
+                    $voset.change()
+                    $drkit.change()
+                    $filter.change()
 
                     if not data.pattern
                         $save_msg.val "no data"
@@ -672,6 +700,30 @@ $ ->
 
                             for j in [0...PATTERN_SIZE]
                                 p.rhythm.draw j
+
+        setwave: (type, name)->
+            item_name = "#{type}-#{name}"
+            data = localStorage.getItem(item_name)
+
+            voput = ()=>
+                if type == "voSet"
+                    caps = CaptionSet[name].split(",")
+                    for div, i in $("#selector li div")
+                        $(div).text(caps[i] or "_")
+                    @caption = caps
+
+                    for p in @rpads
+                        for i in [0...PATTERN_SIZE]
+                            p.rhythm.draw i
+
+            if data?
+                @generator.setWaveSet type, JSON.parse(data)
+                voput()
+            else
+                $.get "/wave/#{type}/#{name}", (res)=>
+                    localStorage.setItem(item_name, res)
+                    @generator.setWaveSet type, JSON.parse(res)
+                    voput()
 
         initpattern: ()->
             r = @rpads[0].rhythm
@@ -688,6 +740,8 @@ $ ->
             for i in [0...PATTERN_SIZE]
                 r.draw i
 
+            $voset.val("ksdh").change()
+            $drkit.val("tr808").change()
 
     # System & UI
     sys = new System()
@@ -707,6 +761,12 @@ $ ->
             val = ui.value | 0
             $("#bpm-val").text val
             sys.chbpm val
+
+    $voset = $('#vocal-set').change (e)->
+        sys.setwave "voSet", $voset.val()
+
+    $drkit = $('#drum-kit').change (e)->
+        sys.setwave "drKit", $drkit.val()
 
     $vol = $("#vol").slider min:0, max:10, value:8, step:1,
         change: (e, ui)->
@@ -729,6 +789,9 @@ $ ->
             val = ui.value | 0
             $("#pitch-val").text val
             sys.chpitch val
+
+    $filter = $("#filter").change (e)->
+        sys.chfilter $filter.val() | 0
 
     $gain = $("#gain").slider min:0, max:10, value:4, step:1,
         change: (e, ui)->
@@ -763,8 +826,21 @@ $ ->
             $("#res-val").text val
             sys.chres val
 
-    $filter = $("#filter").change (e)->
-        sys.chfilter $filter.val() | 0
+
+    rotate_select = (target)->
+        current_value = target.val()
+        [find, change] = [false, false]
+        for o in $("option", target)
+            if find
+                target.val($(o).val())
+                change = true
+                break
+            if $(o).val() == current_value
+                find = true
+        if not change
+            target.val($("option:first", target).val())
+        target.change()
+
 
     $(document).keydown (e)->
         if e.ctrlKey or e.metaKey then return
@@ -774,7 +850,7 @@ $ ->
             when "1".charCodeAt(0), "2".charCodeAt(0),\
                  "3".charCodeAt(0), "4".charCodeAt(0),\
                  "5".charCodeAt(0), "7".charCodeAt(0),\
-                 "6".charCodeAt(0), "8".charCodeAt(0)
+                 "6".charCodeAt(0), "8".charCodeAt(0), "9".charCodeAt(0)
                 sys.putvoice(e.keyCode - "1".charCodeAt(0), ON, ON)
             when "0".charCodeAt(0)
                 sys.putvoice(-1, OFF, ON)
@@ -805,10 +881,10 @@ $ ->
                 $res.slider("value", $res.slider("value") - 0.05)
             when "P".charCodeAt(0)
                 $res.slider("value", $res.slider("value") + 0.05)
+
             when "F".charCodeAt(0)
-                val = ($filter.val()|0) + 1
-                if val == -4 then val = 0
-                $filter.val(val).change()
+                rotate_select($filter)
+
             when "H".charCodeAt(0), 37 then sys.move -1,  0
             when "L".charCodeAt(0), 39 then sys.move +1,  0
             when "K".charCodeAt(0), 38 then sys.move  0, -1
@@ -842,8 +918,10 @@ $ ->
     sys.move 0, 0
     $("#selector li:first div").click()
 
-    id = location.pathname.substr(1)
-    if id then sys.load id
-    else sys.initpattern()
+    setTimeout( ()->
+        id = location.pathname.substr(1)
+        if id then sys.load id
+        else sys.initpattern()
+    , 500)
 
 

@@ -20,6 +20,11 @@ header h1 a {
     text-decoration: none;
 }
 
+header em {
+    font-size: 18px;
+    font-style: normal;
+}
+
 #social-button {
     float: right;
     margin-top: 15px;
@@ -62,13 +67,13 @@ header h1 a {
 #save-msg {
     border: solid 1px #333;
     background: transparent;
-    width: 300px;
+    width: 350px;
     color: white;
     margin-left: 10px;
 }
 
 #selector {
-    width: 300px;
+    width: 350px;
     padding: 0px;
     margin: 5px 10px 0px 10px;
     list-style: none;
@@ -76,7 +81,7 @@ header h1 a {
 
 #selector li {
     cursor: hand;
-    display: inline;
+    float: left;
     margin-left: 5px;
 }
 
@@ -87,25 +92,30 @@ header h1 a {
     font-size: 14px;
 
     padding: 3px;
-    width: 25px;
-    margin: 0px;
-    
-    display: inline;
+    width: 16px;
+    height: 16px;
+    margin: 2px;
+    float: right;
+    text-align: center;
+
     font-weight: bold;
     border-radius: 2px;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
 }
 
+#selector li span {
+    font-size: 10px;
+}
+
 #spectrum {
     background: black;
-    width: 380px;
+    width: 330px;
     height: 50px;
 }
 
 
 #options-panel {
-
     height: 80px;
     margin: 5px 0px 0px 10px;
     display: none;
@@ -123,16 +133,28 @@ header h1 a {
     border-width: 0px 0px 0px 0px;
 }
 
+.width-200 {
+    width: 200px;
+}
+
 .slider {
-    width: 130px;
+    width: 145px;
     margin-right: 10px;
     height: 35px;
 }
 
-.filter-select {
+.select {
     position: relative;
     top: 15px;
     height: 40px;
+}
+
+.select select {
+    position: relative;
+    top: -3px;
+    float: right;
+    width: 80px;
+
 }
 
 #options-panel section:last-child {
@@ -146,7 +168,7 @@ header h1 a {
     font-size: 12px;
 }
 
-.filter-select label {
+.select label {
     display: inline;
 }
 
@@ -182,11 +204,6 @@ header h1 a {
     border-radius: 5px;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
-}
-
-
-#selector li span {
-    font-size: 10px;
 }
 
 
