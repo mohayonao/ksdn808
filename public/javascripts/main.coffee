@@ -5,6 +5,10 @@ $ ->
     CAPTION = "関西電気保安協会"
     PATTERN_SIZE = 16 * 2
 
+    CaptionSet =
+        ksdh: "関,西,電,気,保,安,協,会",
+        ping: "生,存,戦,りゃ,く"
+
     DEBUG = 0
 
     # enumerate
@@ -111,13 +115,13 @@ $ ->
             c.clearRect(x, 0, dx, h)
 
             voice = @pattern[index][Vo]
-            if voice != 0
+            if sys.caption and voice != 0
                 c.shadowBlur = 0
                 if @ledIndex == index
                     c.fillStyle = "lightyellow"
                 else
                     c.fillStyle = "gray"
-                c.fillText(CAPTION[voice-1], x+4, 30, dx)
+                c.fillText((sys.caption[voice-1] or "＿")[0], x+4, 30, dx)
 
             if @_cursor[0] == index
                 switch @_cursor[1]
@@ -169,15 +173,40 @@ $ ->
         return result
 
 
+
     class RhythmGenerator
         constructor: (sys, player, waves)->
             @sys = sys
             @player = player
-            console.log "samplerate", @player.SAMPLERATE
+            console.log "#{player.gettype()}"
+            console.log "samplerate: #{player.SAMPLERATE}, channel: #{player.CHANNEL}"
 
+            @_wavData = ( [0] for i in [0..12] )
+
+            @_sample = 0
+            @_sampleCounter = 0
+            @_index = 0
+            @_src = [ 0, 0, 0, 0 ]
+            @_vol = [ 2.0, 0, 0, 1.0 ]
+            @_wavlet  = [ 0, @_wavData[SD], @_wavData[BD], 0 ]
+            @_wavIndex = [ 0, 0, 0, 0 ]
+            @_drumStep = 1.5
+
+            @_filter = null
+            @_filterIndex = 0
+            @_filterIndexStep = 0
+
+            @_viewer = null
+
+            @chbpm 180
+            @chvol   8
+            @chpitch 0
+
+        setWaveSet: (type, set)->
             stretch = @player.SAMPLERATE / SAMPLERATE
+
             lst = []
-            for wave, i in waves
+            for wave, i in set
                 binary = atob(wave)
                 data = []
                 for j in [0...binary.length/2]
@@ -187,23 +216,15 @@ $ ->
                     x = if bb & 0x8000 then -((bb^0xFFFF)+1) else bb
                     data[j] = x / 65535
                 lst[i] = waveStretch(data, (data.length * stretch + 0.5)|0)
-            @_wavData = lst
 
-            @_filter = null
-            @_sample = 0
-            @_sampleCounter = 0
-            @_index = 0
-            @_src = [ 0, 0, 0, 0 ]
-            @_vol = [ 2.0, 0, 0, 1.0 ]
-            @_wavlet  = [ 0, @_wavData[SD], @_wavData[BD], 0 ]
-            @_wavIndex = [ 0, 0, 0, 0 ]
-
-
-            @_filterIndex = 0
-            @_filterIndexStep = 0
-
-            @chbpm 180
-            @chvol   8
+            if type == "drKit"
+                for i in [0..3]
+                    @_wavData[i] = lst[i]
+                @_wavlet[SD] = @_wavData[SD]
+                @_wavlet[BD] = @_wavData[BD]
+            else
+                for i in [4..12]
+                    @_wavData[i] = lst[i-4]
 
         isPlaying: ()->@player.isPlaying()
 
@@ -218,6 +239,9 @@ $ ->
         setfilter: (filter)->
             @_filter = filter
 
+        setviewer: (viewer)->
+            @_viewer = viewer
+
         chfilterrate: (val)->
             @_filterIndexStep = val * 1024 / @player.SAMPLERATE
 
@@ -229,6 +253,12 @@ $ ->
         chvol: (val)->
             @_vol[Vo] = val/10
 
+        chpitch: (val)->
+            if val < 1 then v = 1
+            else if val > 5 then v = 5
+            @_pitch = val
+            @_drumStep = [0.75, 0.8, 0.9, 0.95, 1.0, 1.1, 1.2, 1.25, 1.3][val+4]
+
         next: () ->
             cnt = @player.STREAM_CELL_COUNT
             cellsize = @player.STREAM_CELL_SIZE
@@ -237,7 +267,7 @@ $ ->
             [_index,_src] = [@_index,@_src]
             [_wavlet, _vol] = [@_wavlet,@_vol]
             [_sample,_sampleLimit] = [@_sample,@_sampleLimit]
-            [_wavData,_wavIndex] = [@_wavData,@_wavIndex]
+            [_wavData,_wavIndex, _drumStep] = [@_wavData,@_wavIndex, @_drumStep]
             [_filter,_filterIndex,_filterIndexStep] = [@_filter,@_filterIndex,@_filterIndexStep]
 
             i2 = (_index - 1 + maxIndex) % maxIndex
@@ -282,9 +312,9 @@ $ ->
                 for j in [0...cellsize]
                     for type in [HH, SD, BD]
                         stream[k] += (_wavlet[type][_wavIndex[type]|0])*_vol[type] || 0.0
-                        _wavIndex[type] += 1
+                        _wavIndex[type] += _drumStep
 
-                    vstream[j] += (_wavlet[Vo][_wavIndex[Vo]|0]*_vol[Vo] || 0.0)
+                    vstream[j] += (_wavlet[Vo][_wavIndex[Vo]|0]*(_vol[Vo]) || 0.0)
                     _wavIndex[Vo] += 1
                     k += 1
 
@@ -303,12 +333,13 @@ $ ->
                 for _j in [0...cellsize]
                     stream[_k+_j] += vstream[_j]
 
-
             rpads[m].rhythm.led(n, ON)
 
             for i in [0...stream.length]
                 if stream[i] < -1.0 then stream[i] = -1.0
                 else if stream[i] > 1.0 then stream[i] = 1.0
+
+            @_viewer.draw stream if @_viewer
 
             @_index = _index
             @_src = _src
@@ -382,6 +413,46 @@ $ ->
             @_damp = Math.min(2 * (1 - Math.pow(resonance, 0.25)), Math.min(2, 2/@_freq - @_freq*0.5))
 
 
+
+    class SpectrumViewer
+        constructor: (buffersize, samplerate, canvas)->
+            @canvas = canvas
+            @context = canvas.getContext("2d")
+            $canvas = $(canvas)
+            @width = canvas.width = $canvas.width()
+            @height = canvas.height = $canvas.height()
+
+            @_fft = new FFT(buffersize, samplerate)
+            @context.fillStyle = "white"
+
+            @_count = 0
+
+        draw: (stream)->
+            fft = @_fft
+            fft.forward stream
+
+            h = @height
+            c = @context
+
+            div = fft.sampleRate / 11025 / 2
+
+            spectrum = fft.spectrum
+            jmax = (spectrum.length / div) / 32
+            imax = spectrum.length / jmax
+
+            c.fillStyle = "rgba(0, 32, 0, 0.25)"
+            c.fillRect(0, 0, @width, h)
+
+            c.fillStyle = "rgba(224, 255, 224, 0.80)"
+            for i in [0...imax]
+                v = 0
+                for j in [0...jmax]
+                    v += spectrum[i * jmax + j]
+                y = h * (v * 1.5)
+                c.fillRect(i * jmax, h - y, jmax - 1, y)
+
+
+
     class System
         constructor: ->
             @edit = $("#edit")
@@ -389,8 +460,8 @@ $ ->
             @voice = 0
             @index = 0
 
-            for ch, i in CAPTION
-                $div = $(document.createElement("div")).text(ch)
+            for i in [0..8]
+                $div = $(document.createElement("div")).text("")
                     .click do(i)=>=>@putvoice(i, ON, OFF)
                 $label = $(document.createElement("span")).text(i + 1 +"")
 
@@ -400,9 +471,16 @@ $ ->
 
             player = pico.getplayer {samplerate:SAMPLERATE, channel:1}
             if player
+                samplerate = player.SAMPLERATE
+                buffersize = player.STREAM_FULL_SIZE
+
                 @generator = new RhythmGenerator(@, player, V)
-                @filter = new IIRFilter(NONE, @generator.player.SAMPLERATE)
+                @filter = new IIRFilter(NONE, samplerate)
                 @generator.setfilter @filter
+
+                scanvas = document.getElementById("spectrum")
+                @spectrum = new SpectrumViewer(buffersize, samplerate, scanvas)
+                @generator.setviewer @spectrum
             else
                 $("#play").attr("disabled", true)
 
@@ -445,6 +523,7 @@ $ ->
 
         chbpm: (val) -> @generator.chbpm val
         chvol: (val) -> @generator.chvol val
+        chpitch: (val) -> @generator.chpitch val
         chrate: (val) -> @generator.chfilterrate val
 
         chfilter: (val) -> @filter.chtype val
@@ -571,8 +650,11 @@ $ ->
         save: ()->
             dict = pattern: ( p.rhythm.pattern for p in @rpads )
             bpm: $bpm.slider("value")
+            voset: $voset.val() ? "ksdh"
+            drkit: $drkit.val() ? "tr808"
             vol: $vol.slider("value")
-            filter: $filter.val() | 0
+            pitch: $pitch.slider("value")
+            filter: $filter.val() ? NONE
             gain: $gain.slider("value")
             rate: $rate.slider("value")
             res : $res .slider("value")
@@ -583,18 +665,27 @@ $ ->
                 $save_msg.val url
 
         load: (id)->
-            $.get "/api/" + id, (res)=>
+            $.get "/load/#{id}", (res)=>
                 if not res
                     $save_msg.val "no data"
                 else
                     data = JSON.parse(res)
 
+                    console.log data
+
                     if data.bpm then $bpm.slider("value", data.bpm)
+                    if data.voset then $voset.val(data.voset ? "ksdh")
+                    if data.drkit then $drkit.val(data.drkit ? "tr808")
                     if data.vol then $vol.slider("value", data.vol)
-                    if data.filter then $filter.val(data.filter).change()
+                    if data.pitch then $pitch.slider("value", data.vol)
+                    if data.filter then $filter.val(data.filter ? NONE)
                     if data.gain then $gain.slider("value", data.gain)
                     if data.rate then $rate.slider("value", data.rate)
                     if data.res  then $res.slider("value", data.res)
+
+                    $voset.change()
+                    $drkit.change()
+                    $filter.change()
 
                     if not data.pattern
                         $save_msg.val "no data"
@@ -609,6 +700,30 @@ $ ->
 
                             for j in [0...PATTERN_SIZE]
                                 p.rhythm.draw j
+
+        setwave: (type, name)->
+            item_name = "#{type}-#{name}"
+            data = localStorage.getItem(item_name)
+
+            voput = ()=>
+                if type == "voSet"
+                    caps = CaptionSet[name].split(",")
+                    for div, i in $("#selector li div")
+                        $(div).text(caps[i] or "_")
+                    @caption = caps
+
+                    for p in @rpads
+                        for i in [0...PATTERN_SIZE]
+                            p.rhythm.draw i
+
+            if data?
+                @generator.setWaveSet type, JSON.parse(data)
+                voput()
+            else
+                $.get "/wave/#{type}/#{name}", (res)=>
+                    localStorage.setItem(item_name, res)
+                    @generator.setWaveSet type, JSON.parse(res)
+                    voput()
 
         initpattern: ()->
             r = @rpads[0].rhythm
@@ -625,6 +740,8 @@ $ ->
             for i in [0...PATTERN_SIZE]
                 r.draw i
 
+            $voset.val("ksdh").change()
+            $drkit.val("tr808").change()
 
     # System & UI
     sys = new System()
@@ -645,6 +762,12 @@ $ ->
             $("#bpm-val").text val
             sys.chbpm val
 
+    $voset = $('#vocal-set').change (e)->
+        sys.setwave "voSet", $voset.val()
+
+    $drkit = $('#drum-kit').change (e)->
+        sys.setwave "drKit", $drkit.val()
+
     $vol = $("#vol").slider min:0, max:10, value:8, step:1,
         change: (e, ui)->
             val = ui.value | 0
@@ -655,6 +778,20 @@ $ ->
             val = ui.value | 0
             $("#vol-val").text val
             sys.chvol val
+
+    $pitch = $("#pitch").slider min:-4, max:4, value:0, step:1,
+        change: (e, ui)->
+            val = ui.value | 0
+            $("#pitch-val").text val
+            sys.chpitch val
+
+        slide: (e, ui)->
+            val = ui.value | 0
+            $("#pitch-val").text val
+            sys.chpitch val
+
+    $filter = $("#filter").change (e)->
+        sys.chfilter $filter.val() | 0
 
     $gain = $("#gain").slider min:0, max:10, value:4, step:1,
         change: (e, ui)->
@@ -689,8 +826,21 @@ $ ->
             $("#res-val").text val
             sys.chres val
 
-    $filter = $("#filter").change (e)->
-        sys.chfilter $filter.val() | 0
+
+    rotate_select = (target)->
+        current_value = target.val()
+        [find, change] = [false, false]
+        for o in $("option", target)
+            if find
+                target.val($(o).val())
+                change = true
+                break
+            if $(o).val() == current_value
+                find = true
+        if not change
+            target.val($("option:first", target).val())
+        target.change()
+
 
     $(document).keydown (e)->
         if e.ctrlKey or e.metaKey then return
@@ -700,7 +850,7 @@ $ ->
             when "1".charCodeAt(0), "2".charCodeAt(0),\
                  "3".charCodeAt(0), "4".charCodeAt(0),\
                  "5".charCodeAt(0), "7".charCodeAt(0),\
-                 "6".charCodeAt(0), "8".charCodeAt(0)
+                 "6".charCodeAt(0), "8".charCodeAt(0), "9".charCodeAt(0)
                 sys.putvoice(e.keyCode - "1".charCodeAt(0), ON, ON)
             when "0".charCodeAt(0)
                 sys.putvoice(-1, OFF, ON)
@@ -731,10 +881,10 @@ $ ->
                 $res.slider("value", $res.slider("value") - 0.05)
             when "P".charCodeAt(0)
                 $res.slider("value", $res.slider("value") + 0.05)
+
             when "F".charCodeAt(0)
-                val = ($filter.val()|0) + 1
-                if val == -4 then val = 0
-                $filter.val(val).change()
+                rotate_select($filter)
+
             when "H".charCodeAt(0), 37 then sys.move -1,  0
             when "L".charCodeAt(0), 39 then sys.move +1,  0
             when "K".charCodeAt(0), 38 then sys.move  0, -1
@@ -768,8 +918,10 @@ $ ->
     sys.move 0, 0
     $("#selector li:first div").click()
 
-    id = location.pathname.substr(1)
-    if id then sys.load id
-    else sys.initpattern()
+    setTimeout( ()->
+        id = location.pathname.substr(1)
+        if id then sys.load id
+        else sys.initpattern()
+    , 500)
 
 

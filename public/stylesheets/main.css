@@ -5,17 +5,24 @@ body {
 
 header {
     width: 880px;
+    height: 50px;
 }
 
 header h1 {
+    float: left;
     font-family: 'Michroma', sans-serif;
-    display: inline;
+    margin: 0px;
 }
 
 header h1 a {
     color: white;
     cursor: hand;
     text-decoration: none;
+}
+
+header em {
+    font-size: 18px;
+    font-style: normal;
 }
 
 #social-button {
@@ -47,29 +54,34 @@ header h1 a {
     white-space: nowrap;
 }
 
+#console section {
+    float: left;
+    height: 40px;
+}
+
 #console button {
     width: 75px;
 }
 
+
 #save-msg {
     border: solid 1px #333;
     background: transparent;
-    width: 250px;
+    width: 350px;
     color: white;
+    margin-left: 10px;
 }
 
 #selector {
-    display: inline;
-    width: 270px;
-    margin: 3px 0px 0px 25px;
+    width: 350px;
     padding: 0px;
+    margin: 5px 10px 0px 10px;
     list-style: none;
-    text-align: right;
 }
 
 #selector li {
     cursor: hand;
-    display: inline;
+    float: left;
     margin-left: 5px;
 }
 
@@ -80,10 +92,12 @@ header h1 a {
     font-size: 14px;
 
     padding: 3px;
-    width: 25px;
-    margin: 0px;
-    
-    display: inline;
+    width: 16px;
+    height: 16px;
+    margin: 2px;
+    float: right;
+    text-align: center;
+
     font-weight: bold;
     border-radius: 2px;
     -webkit-border-radius: 2px;
@@ -94,26 +108,56 @@ header h1 a {
     font-size: 10px;
 }
 
+#spectrum {
+    background: black;
+    width: 330px;
+    height: 50px;
+}
+
+
 #options-panel {
-    height: 40px;
+    height: 80px;
     margin: 5px 0px 0px 10px;
     display: none;
 }
 
-.slider {
-    width: 130px;
-    margin-right: 10px;
+#options-panel section {
     float: left;
+    height: 80px;
+    margin-right: 10px;
     border: solid 0px gray;
     border-width: 0px 1px 0px 0px;
 }
 
-.filter-select {
-    margin-top: 10px;
+#options-panel .no-border {
+    border-width: 0px 0px 0px 0px;
 }
 
+.width-200 {
+    width: 200px;
+}
 
-.slider:last-child {
+.slider {
+    width: 145px;
+    margin-right: 10px;
+    height: 35px;
+}
+
+.select {
+    position: relative;
+    top: 15px;
+    height: 40px;
+}
+
+.select select {
+    position: relative;
+    top: -3px;
+    float: right;
+    width: 80px;
+
+}
+
+#options-panel section:last-child {
     border-width: 0px;
 }
 
@@ -124,7 +168,7 @@ header h1 a {
     font-size: 12px;
 }
 
-.filter-select label {
+.select label {
     display: inline;
 }
 
@@ -140,6 +184,8 @@ header h1 a {
     font-family: monospace;
     font-size: 12px;
 }
+
+
 .ui-slider-horizontal {
     height: 0.2em !important;
 }
@@ -153,12 +199,13 @@ header h1 a {
     width: 880px;
     background: #999;
     margin-top: 10px;
-    padding-bottom: 5px;
+    padding: 5px 0px;
 
     border-radius: 5px;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
 }
+
 
 #edit canvas {
     width: 800px;

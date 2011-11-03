@@ -14,7 +14,7 @@
     if (!(window.Float32Array != null)) {
       __bind(function() {
         console.warn("Float32Array are not defined, so use fake.");
-        return window.Float32Array = (function() {
+        return window.Float32Array = window.Uint32Array = (function() {
           __extends(_Class, Array);
           function _Class(spec) {
             var i, _ref;
@@ -62,6 +62,7 @@
         }, this);
         this._generator = null;
         this._type = "";
+        this._coreObject = null;
       }
       BasePlayer.prototype._initialize = function(spec) {
         var calcBits, channel, duration, samplerate, slice, _ref, _ref2;
@@ -123,6 +124,9 @@
       BasePlayer.prototype.gettype = function() {
         return this._type;
       };
+      BasePlayer.prototype.getcore = function() {
+        return this._coreObject;
+      };
       BasePlayer.prototype._readStream = function() {
         var index;
         if (this._streamReadIndex === this._streamPlayIndex) {
@@ -146,6 +150,7 @@
         spec.samplerate = this._context.sampleRate;
         this._initialize(spec);
         this._type = "WebkitPlayer";
+        this._coreObject = this._context;
         this._node = this._context.createJavaScriptNode(this.STREAM_FULL_SIZE, 1, this.CHANNEL);
       }
       WebkitPlayer.prototype.play = function(generator) {
@@ -262,6 +267,7 @@
         this._type = "MozPlayer";
         audio = new Audio();
         audio.mozSetup(this.CHANNEL, this.SAMPLERATE);
+        this._coreObject = audio;
         this._playHandler = __bind(function(audio) {
           return __bind(function(stream) {
             return audio.mozWriteAudio(stream);
@@ -326,7 +332,7 @@
       if (spec.duration > 50) {
         spec.duration = 50;
       }
-      if (typeof webkitAudioContext === "function") {
+      if (typeof webkitAudioContext === "function" || typeof webkitAudioContext === "object") {
         return new WebkitPlayer(spec);
       } else if (typeof Audio === "function" || typeof Audio === "object") {
         a = new Audio();
