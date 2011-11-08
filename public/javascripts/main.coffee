@@ -178,7 +178,6 @@ $ ->
         constructor: (sys, player, waves)->
             @sys = sys
             @player = player
-            console.log "#{player.gettype()}"
             console.log "samplerate: #{player.SAMPLERATE}, channel: #{player.CHANNEL}"
 
             @_wavData = ( [0] for i in [0..12] )
@@ -469,7 +468,7 @@ $ ->
 
                 $("#selector").append $li.append($label.append($div))
 
-            player = pico.getplayer {samplerate:SAMPLERATE, channel:1}
+            player = pico.getplayer {samplerate:SAMPLERATE, channel:1, timerpath:"/javascripts/muteki-timer.js"}
             if player
                 samplerate = player.SAMPLERATE
                 buffersize = player.STREAM_FULL_SIZE
