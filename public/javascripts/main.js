@@ -257,7 +257,6 @@
         var i;
         this.sys = sys;
         this.player = player;
-        console.log("" + (player.gettype()));
         console.log("samplerate: " + player.SAMPLERATE + ", channel: " + player.CHANNEL);
         this._wavData = (function() {
           var _results;
@@ -586,7 +585,8 @@
         }
         player = pico.getplayer({
           samplerate: SAMPLERATE,
-          channel: 1
+          channel: 1,
+          timerpath: "/javascripts/muteki-timer.js"
         });
         if (player) {
           samplerate = player.SAMPLERATE;
